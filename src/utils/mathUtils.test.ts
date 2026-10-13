@@ -11,6 +11,12 @@ import {
   quadraticRoots,
   cylinderMetrics,
   circleMetrics,
+  expandBinomialDiff,
+  diffOfSquares,
+  solveLinearSystem,
+  thalesTheorem,
+  calculateStatistics,
+  sectionFormula,
 } from './mathUtils';
 
 describe('MATHVERSE Mathematical Accuracy Test Suite', () => {
@@ -171,4 +177,124 @@ describe('MATHVERSE Mathematical Accuracy Test Suite', () => {
       expect(area).toBeCloseTo(Math.PI * 196, 6);
     });
   });
+
+  describe('Additional Algebraic Identities', () => {
+    it('(a - b)² = a² - 2ab + b² holds for all real inputs', () => {
+      const cases = [
+        [5, 2],
+        [8, 3],
+        [10, 10],
+        [7.5, 2.5],
+      ];
+      cases.forEach(([a, b]) => {
+        const res = expandBinomialDiff(a, b);
+        expect(res.computed).toBeCloseTo(res.directSquare, 6);
+        expect(res.isIdentical).toBe(true);
+      });
+    });
+
+    it('a² - b² = (a - b)(a + b) difference of squares holds', () => {
+      const cases = [
+        [5, 3],
+        [10, 4],
+        [12, 12],
+        [9.2, 3.2],
+      ];
+      cases.forEach(([a, b]) => {
+        const res = diffOfSquares(a, b);
+        expect(res.diff).toBeCloseTo(res.factored, 6);
+        expect(res.isIdentical).toBe(true);
+      });
+    });
+  });
+
+  describe('Pair of Linear Equations (Consistency & Intersection)', () => {
+    it('Finds unique intersection for intersecting lines (a1/a2 ≠ b1/b2)', () => {
+      // Line 1: 2x + 3y = 8
+      // Line 2: 5x + 4y = 13
+      // det = 2*4 - 5*3 = 8 - 15 = -7
+      // Solution: x = 1, y = 2
+      const res = solveLinearSystem(2, 3, 8, 5, 4, 13);
+      expect(res.type).toBe('intersecting');
+      expect(res.x).toBeCloseTo(1, 6);
+      expect(res.y).toBeCloseTo(2, 6);
+    });
+
+    it('Detects parallel lines / inconsistent system (no solution)', () => {
+      // Line 1: 2x + 4y = 6
+      // Line 2: 2x + 4y = 10
+      const res = solveLinearSystem(2, 4, 6, 2, 4, 10);
+      expect(res.type).toBe('parallel');
+      expect(res.x).toBeNull();
+      expect(res.y).toBeNull();
+    });
+
+    it('Detects coincident lines (infinitely many solutions)', () => {
+      // Line 1: 2x + 3y = 6
+      // Line 2: 4x + 6y = 12
+      const res = solveLinearSystem(2, 3, 6, 4, 6, 12);
+      expect(res.type).toBe('coincident');
+      expect(res.x).toBeNull();
+      expect(res.y).toBeNull();
+    });
+  });
+
+  describe('Thales Theorem (Basic Proportionality Theorem)', () => {
+    it('Computes EC correctly so that AD/DB = AE/EC', () => {
+      // AD = 2, DB = 3, AE = 4 -> EC should be (4 * 3) / 2 = 6
+      const res = thalesTheorem(2, 3, 4);
+      expect(res.ec).toBeCloseTo(6, 6);
+      expect(res.ratioLeft).toBeCloseTo(res.ratioRight, 6);
+      expect(res.isProportional).toBe(true);
+    });
+
+    it('Guards against zero or negative segment lengths', () => {
+      expect(() => thalesTheorem(0, 3, 4)).toThrow();
+      expect(() => thalesTheorem(2, -1, 4)).toThrow();
+    });
+  });
+
+  describe('Statistics (Central Tendency & Dispersion)', () => {
+    it('Computes mean, median, and mode accurately', () => {
+      const data = [10, 20, 20, 30, 40];
+      const stats = calculateStatistics(data);
+      expect(stats.mean).toBe(24);
+      expect(stats.median).toBe(20);
+      expect(stats.modes).toEqual([20]);
+      expect(stats.min).toBe(10);
+      expect(stats.max).toBe(40);
+    });
+
+    it('Computes median correctly for even number of data points', () => {
+      const data = [4, 8, 12, 16];
+      const stats = calculateStatistics(data);
+      expect(stats.median).toBe(10); // (8 + 12) / 2
+    });
+
+    it('Handles outlier effect on mean vs median', () => {
+      const normalData = [10, 11, 12, 13, 14];
+      const withOutlier = [10, 11, 12, 13, 140]; // 140 is extreme outlier
+      const stats1 = calculateStatistics(normalData);
+      const stats2 = calculateStatistics(withOutlier);
+
+      expect(stats1.median).toBe(12);
+      expect(stats2.median).toBe(12); // Median remains robust!
+      expect(stats2.mean).toBeGreaterThan(stats1.mean); // Mean is heavily distorted!
+    });
+  });
+
+  describe('Coordinate Section Formula', () => {
+    it('Computes internal division point correctly', () => {
+      // Points A(1, 1) and B(5, 5), ratio 1:1 (midpoint)
+      const mid = sectionFormula(1, 1, 5, 5, 1, 1);
+      expect(mid.x).toBe(3);
+      expect(mid.y).toBe(3);
+
+      // Ratio 1:2 on segment (0, 0) to (6, 9) -> (1*6 + 2*0)/3 = 2, (1*9 + 2*0)/3 = 3
+      const pt = sectionFormula(0, 0, 6, 9, 1, 2);
+      expect(pt.x).toBe(2);
+      expect(pt.y).toBe(3);
+    });
+  });
 });
+

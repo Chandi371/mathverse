@@ -1,7 +1,17 @@
 import React, { useState } from 'react';
 import { MathView } from './MathView';
 import { allFormulasData } from '../data/formulasData';
-import { Bookmark, BookmarkCheck, Copy, Check, FlaskConical, Search } from 'lucide-react';
+import {
+  Bookmark,
+  BookmarkCheck,
+  Copy,
+  Check,
+  FlaskConical,
+  Search,
+  Sigma,
+  ChevronDown,
+  ChevronUp,
+} from 'lucide-react';
 
 interface FormulaLibraryProps {
   onOpenLab: (labId: string) => void;
@@ -18,10 +28,12 @@ export const FormulaLibrary: React.FC<FormulaLibraryProps> = ({
   const [selectedGrade, setSelectedGrade] = useState<'All' | 9 | 10>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [expandedDerivationIds, setExpandedDerivationIds] = useState<string[]>([]);
 
   const categories = [
     'All',
     'Algebra',
+    'Geometry',
     'Trigonometry',
     'Coordinate Geometry',
     'Mensuration',
@@ -34,6 +46,12 @@ export const FormulaLibrary: React.FC<FormulaLibraryProps> = ({
     setTimeout(() => setCopiedId(null), 1800);
   };
 
+  const toggleDerivation = (id: string) => {
+    setExpandedDerivationIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
   const filtered = allFormulasData.filter((f) => {
     const matchesCat = selectedCategory === 'All' || f.category === selectedCategory;
     const matchesGrade = selectedGrade === 'All' || f.classGrade === selectedGrade;
@@ -41,7 +59,8 @@ export const FormulaLibrary: React.FC<FormulaLibraryProps> = ({
       !searchQuery ||
       f.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       f.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      f.latex.toLowerCase().includes(searchQuery.toLowerCase());
+      f.latex.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (f.derivationSummary && f.derivationSummary.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchesCat && matchesGrade && matchesSearch;
   });
 
@@ -57,7 +76,7 @@ export const FormulaLibrary: React.FC<FormulaLibraryProps> = ({
             Mathematics Formula Repository
           </h1>
           <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 max-w-2xl">
-            Explore core identities and theorems prescribed for Andhra Pradesh SSC Board. Inspect variable meanings, derivation rationales, and launch interactive visual models.
+            Explore core identities, theorems, and derivations prescribed for Andhra Pradesh SSC Board. Inspect step-by-step proofs, variable meanings, and launch interactive visual models.
           </p>
         </div>
 
@@ -85,7 +104,7 @@ export const FormulaLibrary: React.FC<FormulaLibraryProps> = ({
           <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
-            placeholder="Search formulas (e.g. Gauss, Heron, Quadratic, SOH-CAH-TOA)..."
+            placeholder="Search formulas (e.g. Gauss, Heron, Quadratic, Thales, SOH-CAH-TOA)..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm outline-none focus:border-emerald-500 transition shadow-sm"
@@ -113,6 +132,8 @@ export const FormulaLibrary: React.FC<FormulaLibraryProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {filtered.map((formula) => {
           const isBookmarked = bookmarkedIds.includes(formula.id);
+          const isDerivationOpen = expandedDerivationIds.includes(formula.id);
+
           return (
             <div
               key={formula.id}
@@ -185,6 +206,61 @@ export const FormulaLibrary: React.FC<FormulaLibraryProps> = ({
                         <span className="text-slate-700 dark:text-slate-200">{v.meaning}</span>
                       </div>
                     ))}
+                  </div>
+                )}
+
+                {/* Formula Origins Expandable Section */}
+                {(formula.derivationSummary || formula.derivationSteps) && (
+                  <div className="mt-3 mb-2 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden bg-slate-50/60 dark:bg-slate-800/40">
+                    <button
+                      onClick={() => toggleDerivation(formula.id)}
+                      className="w-full px-3 py-2 text-left flex items-center justify-between text-xs font-bold text-indigo-700 dark:text-indigo-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                    >
+                      <span className="flex items-center gap-1.5">
+                        <Sigma className="w-3.5 h-3.5 text-indigo-600" />
+                        Formula Origin &amp; Proof Architecture
+                      </span>
+                      {isDerivationOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                    </button>
+
+                    {isDerivationOpen && (
+                      <div className="p-3 pt-1 border-t border-slate-200 dark:border-slate-700 space-y-2.5 text-xs">
+                        {formula.derivationSummary && (
+                          <p className="text-slate-700 dark:text-slate-200 leading-relaxed bg-white dark:bg-slate-900 p-2.5 rounded-lg border border-slate-200 dark:border-slate-700">
+                            <strong>Origin Premise:</strong> {formula.derivationSummary}
+                          </p>
+                        )}
+
+                        {formula.derivationSteps && formula.derivationSteps.length > 0 && (
+                          <div className="space-y-2">
+                            <span className="font-semibold text-slate-800 dark:text-slate-200 block text-[11px] uppercase tracking-wider">
+                              Logical Step Progression:
+                            </span>
+                            {formula.derivationSteps.map((st) => (
+                              <div
+                                key={st.stepNumber}
+                                className="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-750 text-[11px] space-y-1"
+                              >
+                                <div className="flex items-center justify-between">
+                                  <span className="font-bold text-indigo-600 dark:text-indigo-400">
+                                    Step {st.stepNumber}
+                                  </span>
+                                  <span className="text-slate-400 italic text-[10px]">
+                                    Why valid: {st.reason}
+                                  </span>
+                                </div>
+                                <p className="text-slate-800 dark:text-slate-200">{st.statement}</p>
+                                {st.latex && (
+                                  <div className="p-1 rounded bg-slate-50 dark:bg-slate-800 text-center font-mono my-1">
+                                    <MathView math={st.latex} block />
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

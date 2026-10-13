@@ -12,6 +12,12 @@ export interface FormulaItem {
   category: 'Algebra' | 'Geometry' | 'Coordinate Geometry' | 'Mensuration' | 'Trigonometry' | 'Statistics & Probability' | 'Number Systems';
   labId?: string;
   derivationSummary?: string;
+  derivationSteps?: {
+    stepNumber: number;
+    statement: string;
+    latex?: string;
+    reason: string;
+  }[];
 }
 
 export interface PracticeQuestion {

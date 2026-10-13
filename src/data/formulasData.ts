@@ -1,7 +1,9 @@
 import type { FormulaItem } from '../types/curriculum';
 
 export const allFormulasData: FormulaItem[] = [
-  // Algebra
+  // ==========================================
+  // ALGEBRA
+  // ==========================================
   {
     id: 'f-ap-nth',
     name: 'nth Term of an Arithmetic Progression',
@@ -10,89 +12,150 @@ export const allFormulasData: FormulaItem[] = [
     variables: [
       { symbol: 'a_n', meaning: 'nth term' },
       { symbol: 'a', meaning: 'First term' },
-      { symbol: 'n', meaning: 'Position of term (n ≥ 1)' },
+      { symbol: 'n', meaning: 'Position of term (n ≥ 1, n ∈ ℕ)' },
+      { symbol: 'd', meaning: 'Common difference (aₖ - aₖ₋₁)' },
+    ],
+    chapterId: 'c10-s1-ap',
+    classGrade: 10,
+    category: 'Algebra',
+    labId: 'arithmetic-progression',
+    derivationSummary: 'Start at term 1 = a. Term 2 adds 1d. Term 3 adds 2d. Term n requires exactly (n - 1) additions of d.',
+    derivationSteps: [
+      { stepNumber: 1, statement: 'Write the first few terms by inductive definition:', latex: 'a_1 = a, \\; a_2 = a + d, \\; a_3 = a + 2d, \\; a_4 = a + 3d', reason: 'By definition of an arithmetic progression.' },
+      { stepNumber: 2, statement: 'Observe the coefficient of d relative to index n:', latex: '\\text{Coefficient of } d = n - 1', reason: 'The first term requires 0 steps; each subsequent term takes 1 additional step.' },
+      { stepNumber: 3, statement: 'Generalize for any natural number n:', latex: 'a_n = a + (n - 1)d', reason: 'Direct inductive generalization.' },
+    ],
+  },
+  {
+    id: 'f-ap-sum',
+    name: 'Sum of First n Terms of an AP',
+    latex: 'S_n = \\frac{n}{2}[2a + (n - 1)d] = \\frac{n}{2}(a + l)',
+    description: 'Carl Friedrich Gauss’s inverted pairing summation formula.',
+    variables: [
+      { symbol: 'S_n', meaning: 'Sum of first n terms' },
+      { symbol: 'a', meaning: 'First term' },
+      { symbol: 'l', meaning: 'Last term (a_n)' },
+      { symbol: 'n', meaning: 'Number of terms' },
       { symbol: 'd', meaning: 'Common difference' },
     ],
     chapterId: 'c10-s1-ap',
     classGrade: 10,
     category: 'Algebra',
     labId: 'arithmetic-progression',
-    derivationSummary: 'Start with term 1 = a. Each step adds d. After (n-1) steps, the term is a + (n-1)d.',
-  },
-  {
-    id: 'f-ap-sum',
-    name: 'Sum of n Terms of an AP',
-    latex: 'S_n = \\frac{n}{2}[2a + (n - 1)d] = \\frac{n}{2}(a + l)',
-    description: 'Gauss’s pairing summation formula adding first and last terms.',
-    variables: [
-      { symbol: 'S_n', meaning: 'Sum of first n terms' },
-      { symbol: 'a', meaning: 'First term' },
-      { symbol: 'l', meaning: 'Last term' },
-      { symbol: 'n', meaning: 'Number of terms' },
+    derivationSummary: 'Write the series forwards and backwards. Vertical addition yields n identical pairs of (a + l), which equals 2Sₙ.',
+    derivationSteps: [
+      { stepNumber: 1, statement: 'Write sum forwards:', latex: 'S_n = a + (a+d) + \\dots + (l-d) + l', reason: 'Series in natural order.' },
+      { stepNumber: 2, statement: 'Write sum backwards:', latex: 'S_n = l + (l-d) + \\dots + (a+d) + a', reason: 'Addition is commutative.' },
+      { stepNumber: 3, statement: 'Add both equations vertically:', latex: '2S_n = (a+l) + (a+l) + \\dots + (a+l) \\quad (n \\text{ times})', reason: 'Each pair (a+kd) + (l-kd) sums to (a+l) because kd cancels out.' },
+      { stepNumber: 4, statement: 'Divide by 2:', latex: 'S_n = \\frac{n}{2}(a + l)', reason: 'Combining n identical terms.' },
+      { stepNumber: 5, statement: 'Substitute l = a + (n-1)d:', latex: 'S_n = \\frac{n}{2}[2a + (n-1)d]', reason: 'Expressing in terms of first term and common difference.' },
     ],
-    chapterId: 'c10-s1-ap',
-    classGrade: 10,
-    category: 'Algebra',
-    labId: 'arithmetic-progression',
   },
   {
     id: 'f-quad-form',
-    name: 'Quadratic Formula',
+    name: 'The Quadratic Formula',
     latex: 'x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}',
-    description: 'Universal solution for any quadratic equation ax² + bx + c = 0.',
+    description: 'Universal analytical solution for ax² + bx + c = 0 derived by completing the square.',
     variables: [
-      { symbol: 'a, b, c', meaning: 'Real coefficients with a ≠ 0' },
+      { symbol: 'a, b, c', meaning: 'Real coefficients (a ≠ 0)' },
       { symbol: 'b^2 - 4ac', meaning: 'Discriminant D' },
     ],
     chapterId: 'c10-s1-quad',
     classGrade: 10,
     category: 'Algebra',
     labId: 'quadratic-parabola',
+    derivationSummary: 'Divide ax² + bx + c = 0 by a, complete the square by adding (b/2a)², and take the square root of both sides.',
+    derivationSteps: [
+      { stepNumber: 1, statement: 'Divide by leading coefficient a and transpose constant:', latex: 'x^2 + \\frac{b}{a}x = -\\frac{c}{a}', reason: 'Allowed because a ≠ 0.' },
+      { stepNumber: 2, statement: 'Complete the square by adding (b / 2a)² to both sides:', latex: 'x^2 + 2\\left(\\frac{b}{2a}\\right)x + \\left(\\frac{b}{2a}\\right)^2 = \\frac{b^2}{4a^2} - \\frac{c}{a} = \\frac{b^2 - 4ac}{4a^2}', reason: 'Transforming left side into binomial square (x + b/2a)².' },
+      { stepNumber: 3, statement: 'Factor left side and take square root:', latex: 'x + \\frac{b}{2a} = \\pm \\frac{\\sqrt{b^2 - 4ac}}{2a}', reason: 'Taking square roots of both sides.' },
+      { stepNumber: 4, statement: 'Isolate x:', latex: 'x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}', reason: 'Subtracting b/2a.' },
+    ],
   },
   {
     id: 'f-disc-nature',
-    name: 'Discriminant & Root Nature',
+    name: 'Discriminant & Nature of Real Roots',
     latex: 'D = b^2 - 4ac \\quad \\begin{cases} D > 0 & \\text{2 distinct real roots} \\\\ D = 0 & \\text{2 equal real roots} \\\\ D < 0 & \\text{No real roots} \\end{cases}',
-    description: 'Determines real intersections of a parabola with the x-axis.',
-    variables: [],
+    description: 'Determines real intersections of a parabola with the x-axis without solving the equation.',
+    variables: [
+      { symbol: 'D', meaning: 'Discriminant' },
+    ],
     chapterId: 'c10-s1-quad',
     classGrade: 10,
     category: 'Algebra',
     labId: 'quadratic-parabola',
+    derivationSummary: 'Because x involves √D, if D > 0 the radical yields two distinct real numbers; if D = 0 the radical is 0; if D < 0 square root of negative is non-real.',
   },
   {
     id: 'f-alg-sq-sum',
     name: 'Square of Binomial Sum',
     latex: '(a + b)^2 = a^2 + 2ab + b^2',
-    description: 'Geometric area identity splitting a square into 4 rectangular parts.',
+    description: 'Geometric area identity splitting a square of side (a + b) into four rectangular parts.',
     variables: [
-      { symbol: 'a, b', meaning: 'Terms of binomial' },
+      { symbol: 'a, b', meaning: 'Lengths of sides / algebraic terms' },
     ],
     chapterId: 'c9-s1-poly',
     classGrade: 9,
     category: 'Algebra',
     labId: 'area-model',
+    derivationSummary: 'A square of side (a+b) has area (a+b)². Partitioning sides into a and b produces one square a², two rectangles ab, and one square b².',
+    derivationSteps: [
+      { stepNumber: 1, statement: 'Expand via distributive property:', latex: '(a + b)(a + b) = a(a + b) + b(a + b)', reason: 'Distributing (a + b).' },
+      { stepNumber: 2, statement: 'Multiply each term:', latex: '= a^2 + ab + ba + b^2', reason: 'Distributing terms.' },
+      { stepNumber: 3, statement: 'Combine like terms (since ab = ba):', latex: '= a^2 + 2ab + b^2', reason: 'Multiplication of real numbers is commutative.' },
+    ],
+  },
+  {
+    id: 'f-alg-sq-diff',
+    name: 'Square of Binomial Difference',
+    latex: '(a - b)^2 = a^2 - 2ab + b^2',
+    description: 'Geometric identity subtracting two strips from an a × a square with the corner square b² added back.',
+    variables: [
+      { symbol: 'a, b', meaning: 'Terms with a > b' },
+    ],
+    chapterId: 'c9-s1-poly',
+    classGrade: 9,
+    category: 'Algebra',
+    labId: 'area-model',
+    derivationSummary: 'Subtracting two strips of width b from an a² square removes the corner b² twice; hence +b² must be added back.',
   },
   {
     id: 'f-alg-diff-sq',
     name: 'Difference of Two Squares',
     latex: 'a^2 - b^2 = (a - b)(a + b)',
-    description: 'Factors the difference of two square terms.',
+    description: 'Factors the difference of two square terms by cutting corner b² from square a² and rearranging the L-shape.',
     variables: [],
     chapterId: 'c9-s1-poly',
     classGrade: 9,
     category: 'Algebra',
     labId: 'area-model',
+    derivationSummary: 'Removing b² from a² leaves an L-shape that cuts into two strips of height (a-b), which join into a rectangle of (a-b) × (a+b).',
+  },
+  {
+    id: 'f-linear-consistency',
+    name: 'Consistency of Linear Equations System',
+    latex: '\\begin{cases} \\frac{a_1}{a_2} \\neq \\frac{b_1}{b_2} & \\text{Intersecting (Unique Solution)} \\\\ \\frac{a_1}{a_2} = \\frac{b_1}{b_2} \\neq \\frac{c_1}{c_2} & \\text{Parallel (No Solution, Inconsistent)} \\\\ \\frac{a_1}{a_2} = \\frac{b_1}{b_2} = \\frac{c_1}{c_2} & \\text{Coincident (Infinite Solutions, Dependent)} \\end{cases}',
+    description: 'Coefficient ratio conditions determining line intersections and system consistency.',
+    variables: [
+      { symbol: 'a_i, b_i, c_i', meaning: 'Coefficients of linear equation a_i x + b_i y = c_i' },
+    ],
+    chapterId: 'c10-s1-ch3',
+    classGrade: 10,
+    category: 'Algebra',
+    labId: 'linear-equations',
+    derivationSummary: 'Slopes are -a/b and y-intercepts are c/b. When slopes differ, lines intersect. When slopes match but intercepts differ, lines are parallel.',
   },
 
-  // Trigonometry
+  // ==========================================
+  // TRIGONOMETRY
+  // ==========================================
   {
     id: 'f-trig-sin-def',
     name: 'Sine Ratio (sin θ)',
     latex: '\\sin\\theta = \\frac{\\text{Opposite}}{\\text{Hypotenuse}}',
-    description: 'Ratio of the opposite side length to the hypotenuse in a right triangle.',
+    description: 'Ratio of opposite side length to hypotenuse in a right triangle.',
     variables: [
-      { symbol: '\\theta', meaning: 'Acute angle' },
+      { symbol: '\\theta', meaning: 'Acute angle (0° < θ < 90°)' },
     ],
     chapterId: 'c10-s2-trig',
     classGrade: 10,
@@ -103,7 +166,7 @@ export const allFormulasData: FormulaItem[] = [
     id: 'f-trig-cos-def',
     name: 'Cosine Ratio (cos θ)',
     latex: '\\cos\\theta = \\frac{\\text{Adjacent}}{\\text{Hypotenuse}}',
-    description: 'Ratio of the adjacent base to the hypotenuse.',
+    description: 'Ratio of adjacent base length to hypotenuse in a right triangle.',
     variables: [],
     chapterId: 'c10-s2-trig',
     classGrade: 10,
@@ -114,7 +177,7 @@ export const allFormulasData: FormulaItem[] = [
     id: 'f-trig-tan-def',
     name: 'Tangent Ratio (tan θ)',
     latex: '\\tan\\theta = \\frac{\\text{Opposite}}{\\text{Adjacent}} = \\frac{\\sin\\theta}{\\cos\\theta}',
-    description: 'Ratio of opposite to adjacent side.',
+    description: 'Ratio of opposite to adjacent side, representing the slope of the hypotenuse.',
     variables: [],
     chapterId: 'c10-s2-trig',
     classGrade: 10,
@@ -123,7 +186,7 @@ export const allFormulasData: FormulaItem[] = [
   },
   {
     id: 'f-trig-id-pyth',
-    name: 'Pythagorean Trigonometric Identity',
+    name: 'Fundamental Pythagorean Identity',
     latex: '\\sin^2\\theta + \\cos^2\\theta = 1',
     description: 'Derived by dividing the Pythagorean theorem by hypotenuse squared.',
     variables: [],
@@ -131,14 +194,33 @@ export const allFormulasData: FormulaItem[] = [
     classGrade: 10,
     category: 'Trigonometry',
     labId: 'trig-triangle',
+    derivationSummary: 'In right △ABC, Opp² + Adj² = Hyp². Dividing by Hyp² yields (Opp/Hyp)² + (Adj/Hyp)² = 1, which is sin²θ + cos²θ = 1.',
+    derivationSteps: [
+      { stepNumber: 1, statement: 'State Pythagorean theorem for right triangle:', latex: '(\\text{Opposite})^2 + (\\text{Adjacent})^2 = (\\text{Hypotenuse})^2', reason: 'By Pythagorean Theorem.' },
+      { stepNumber: 2, statement: 'Divide all terms by (Hypotenuse)²:', latex: '\\frac{(\\text{Opposite})^2}{(\\text{Hypotenuse})^2} + \\frac{(\\text{Adjacent})^2}{(\\text{Hypotenuse})^2} = 1', reason: 'Hypotenuse > 0, division is valid.' },
+      { stepNumber: 3, statement: 'Substitute definition of sin θ and cos θ:', latex: '(\\sin\\theta)^2 + (\\cos\\theta)^2 = 1 \\implies \\sin^2\\theta + \\cos^2\\theta = 1', reason: 'By definition of basic trigonometric ratios.' },
+    ],
+  },
+  {
+    id: 'f-trig-id-sec',
+    name: 'Secant-Tangent Identity',
+    latex: '1 + \\tan^2\\theta = \\sec^2\\theta',
+    description: 'Secondary trigonometric identity obtained by dividing sin²θ + cos²θ = 1 by cos²θ.',
+    variables: [],
+    chapterId: 'c10-s2-trig',
+    classGrade: 10,
+    category: 'Trigonometry',
+    labId: 'trig-triangle',
   },
 
-  // Coordinate Geometry
+  // ==========================================
+  // COORDINATE GEOMETRY
+  // ==========================================
   {
     id: 'f-coord-dist',
     name: 'Distance Formula',
     latex: 'd = \\sqrt{(x_2 - x_1)^2 + (y_2 - y_1)^2}',
-    description: 'Cartesian distance derived directly from Pythagoras theorem.',
+    description: 'Cartesian distance derived directly from Pythagoras theorem on coordinate grid.',
     variables: [
       { symbol: '(x_1, y_1)', meaning: 'Coordinates of Point A' },
       { symbol: '(x_2, y_2)', meaning: 'Coordinates of Point B' },
@@ -147,6 +229,12 @@ export const allFormulasData: FormulaItem[] = [
     classGrade: 10,
     category: 'Coordinate Geometry',
     labId: 'coordinate-geometry',
+    derivationSummary: 'Horizontal distance is |x₂ - x₁| and vertical distance is |y₂ - y₁|. By Pythagoras, hypotenuse d² = (Δx)² + (Δy)²',
+    derivationSteps: [
+      { stepNumber: 1, statement: 'Construct right triangle with third vertex C(x₂, y₁):', latex: 'AC = |x_2 - x_1|, \\quad BC = |y_2 - y_1|', reason: 'AC is parallel to x-axis; BC is parallel to y-axis.' },
+      { stepNumber: 2, statement: 'Apply Pythagorean theorem on △ABC:', latex: 'AB^2 = AC^2 + BC^2 = (x_2 - x_1)^2 + (y_2 - y_1)^2', reason: '∠C is 90°.' },
+      { stepNumber: 3, statement: 'Take positive square root:', latex: 'd = \\sqrt{(x_2 - x_1)^2 + (y_2 - y_1)^2}', reason: 'Distance is non-negative.' },
+    ],
   },
   {
     id: 'f-coord-midpoint',
@@ -162,30 +250,72 @@ export const allFormulasData: FormulaItem[] = [
   {
     id: 'f-coord-section',
     name: 'Section Formula (Internal Division)',
-    latex: 'P(x, y) = \\left( \\frac{m_1 x_2 + m_2 x_1}{m_1 + m_2}, \\; \\frac{m_1 y_2 + m_2 y_1}{m_1 + m_2} \\right)',
-    description: 'Finds the point dividing line segment AB in ratio m₁ : m₂.',
+    latex: 'P(x, y) = \\left( \\frac{m x_2 + n x_1}{m + n}, \\; \\frac{m y_2 + n y_1}{m + n} \\right)',
+    description: 'Finds the point dividing line segment AB in internal ratio m : n.',
     variables: [
-      { symbol: 'm_1 : m_2', meaning: 'Internal division ratio' },
+      { symbol: 'm : n', meaning: 'Internal division ratio' },
     ],
     chapterId: 'c10-s1-ch7',
     classGrade: 10,
     category: 'Coordinate Geometry',
+    labId: 'coordinate-geometry',
   },
 
-  // Mensuration & Circles
+  // ==========================================
+  // GEOMETRY
+  // ==========================================
+  {
+    id: 'f-geom-thales',
+    name: 'Basic Proportionality Theorem (Thales Theorem)',
+    latex: '\\frac{AD}{DB} = \\frac{AE}{EC}',
+    description: 'If a line is drawn parallel to one side of a triangle intersecting other sides, it divides them in the same ratio.',
+    variables: [
+      { symbol: 'AD, DB', meaning: 'Segments along side AB' },
+      { symbol: 'AE, EC', meaning: 'Segments along side AC' },
+    ],
+    chapterId: 'c10-s1-ch6',
+    classGrade: 10,
+    category: 'Geometry',
+    labId: 'similar-triangles',
+    derivationSummary: 'Compare Area(△ADE) to Area(△BDE) and Area(△CDE) using common heights from vertices E and D.',
+    derivationSteps: [
+      { stepNumber: 1, statement: 'Draw altitudes EF ⊥ AB and DG ⊥ AC, join BE and CD:', latex: '\\text{Area}(\\triangle ADE) = \\frac{1}{2} \\cdot AD \\cdot EF, \\quad \\text{Area}(\\triangle BDE) = \\frac{1}{2} \\cdot DB \\cdot EF', reason: 'Both triangles share altitude EF with bases on line AB.' },
+      { stepNumber: 2, statement: 'Compute ratio of areas:', latex: '\\frac{\\text{Area}(\\triangle ADE)}{\\text{Area}(\\triangle BDE)} = \\frac{AD}{DB}', reason: 'EF cancels out.' },
+      { stepNumber: 3, statement: 'Similarly for triangles on side AC with altitude DG:', latex: '\\frac{\\text{Area}(\\triangle ADE)}{\\text{Area}(\\triangle CDE)} = \\frac{AE}{EC}', reason: 'DG cancels out.' },
+      { stepNumber: 4, statement: 'Notice △BDE and △CDE share base DE and lie between parallels DE ∥ BC:', latex: '\\text{Area}(\\triangle BDE) = \\text{Area}(\\triangle CDE) \\implies \\frac{AD}{DB} = \\frac{AE}{EC}', reason: 'Triangles on the same base between same parallels have equal areas.' },
+    ],
+  },
+  {
+    id: 'f-circle-tangent-len',
+    name: 'Lengths of Tangents from External Point',
+    latex: 'PA = PB',
+    description: 'The lengths of tangents drawn from an external point P to a circle are equal.',
+    variables: [
+      { symbol: 'PA, PB', meaning: 'Tangents to circle from point P touching at A and B' },
+    ],
+    chapterId: 'c10-s2-ch10',
+    classGrade: 10,
+    category: 'Geometry',
+    derivationSummary: 'Join center O to P, A, and B. Right triangles △OAP and △OBP are congruent by RHS criterion (OA = OB = r, OP common, ∠OAP = ∠OBP = 90°). Hence PA = PB.',
+  },
+
+  // ==========================================
+  // MENSURATION
+  // ==========================================
   {
     id: 'f-heron-area-full',
     name: "Heron's Formula for Triangle Area",
     latex: '\\text{Area} = \\sqrt{s(s - a)(s - b)(s - c)}',
-    description: 'Computes triangle area using only side lengths and semi-perimeter s = (a+b+c)/2.',
+    description: 'Computes triangle area from side lengths alone without requiring an altitude.',
     variables: [
-      { symbol: 's', meaning: 'Semi-perimeter' },
-      { symbol: 'a, b, c', meaning: 'Side lengths (must satisfy a + b > c)' },
+      { symbol: 's', meaning: 'Semi-perimeter: s = (a + b + c) / 2' },
+      { symbol: 'a, b, c', meaning: 'Side lengths (must satisfy triangle inequality a+b > c)' },
     ],
     chapterId: 'c9-s2-heron',
     classGrade: 9,
     category: 'Mensuration',
     labId: 'herons-formula',
+    derivationSummary: 'Drop an altitude h to base c. Use Pythagorean theorem on both right sub-triangles to eliminate x and express h purely in terms of a, b, c.',
   },
   {
     id: 'f-circle-area',
@@ -195,10 +325,11 @@ export const allFormulasData: FormulaItem[] = [
     variables: [
       { symbol: 'r', meaning: 'Radius of circle' },
     ],
-    chapterId: 'c9-s2-ch9',
-    classGrade: 9,
+    chapterId: 'c10-s2-ch11',
+    classGrade: 10,
     category: 'Mensuration',
     labId: 'circle-area',
+    derivationSummary: 'Slicing circle into n sectors and interleaving them head-to-tail produces a parallelogram of base (1/2)(2πr) = πr and height r. Area = πr × r = πr².',
   },
   {
     id: 'f-cylinder-csa',
@@ -206,7 +337,7 @@ export const allFormulasData: FormulaItem[] = [
     latex: '\\text{CSA} = 2\\pi rh',
     description: 'Area of unrolled rectangular sheet of length 2πr and height h.',
     variables: [
-      { symbol: 'r', meaning: 'Radius of base' },
+      { symbol: 'r', meaning: 'Radius of circular base' },
       { symbol: 'h', meaning: 'Height of cylinder' },
     ],
     chapterId: 'c9-s2-ch11',
@@ -219,7 +350,10 @@ export const allFormulasData: FormulaItem[] = [
     name: 'Total Surface Area of Cylinder',
     latex: '\\text{TSA} = 2\\pi r(r + h)',
     description: 'Sum of curved surface 2πrh plus two circular flat lids 2πr².',
-    variables: [],
+    variables: [
+      { symbol: 'r', meaning: 'Radius' },
+      { symbol: 'h', meaning: 'Height' },
+    ],
     chapterId: 'c9-s2-ch11',
     classGrade: 9,
     category: 'Mensuration',
@@ -229,7 +363,7 @@ export const allFormulasData: FormulaItem[] = [
     id: 'f-cylinder-vol',
     name: 'Volume of Cylinder',
     latex: 'V = \\pi r^2 h',
-    description: 'Base circle area multiplied by vertical height.',
+    description: 'Base circular area multiplied by height.',
     variables: [],
     chapterId: 'c9-s2-ch11',
     classGrade: 9,
@@ -237,15 +371,48 @@ export const allFormulasData: FormulaItem[] = [
     labId: 'cylinder-net',
   },
 
-  // Probability
+  // ==========================================
+  // STATISTICS & PROBABILITY
+  // ==========================================
+  {
+    id: 'f-stat-mean',
+    name: 'Mean of Grouped Data (Direct Method)',
+    latex: '\\bar{x} = \\frac{\\sum f_i x_i}{\\sum f_i}',
+    description: 'Sum of products of class marks and frequencies divided by total frequency.',
+    variables: [
+      { symbol: 'x_i', meaning: 'Class mark (Midpoint of class interval)' },
+      { symbol: 'f_i', meaning: 'Frequency of ith class' },
+    ],
+    chapterId: 'c10-s2-ch13',
+    classGrade: 10,
+    category: 'Statistics & Probability',
+    labId: 'statistics-lab',
+  },
+  {
+    id: 'f-stat-median',
+    name: 'Median of Grouped Data',
+    latex: '\\text{Median} = l + \\left( \\frac{\\frac{n}{2} - cf}{f} \\right) \\times h',
+    description: 'Locates the 50th percentile in the median class.',
+    variables: [
+      { symbol: 'l', meaning: 'Lower limit of median class' },
+      { symbol: 'n', meaning: 'Total number of observations (∑f_i)' },
+      { symbol: 'cf', meaning: 'Cumulative frequency of class preceding median class' },
+      { symbol: 'f', meaning: 'Frequency of median class' },
+      { symbol: 'h', meaning: 'Class size' },
+    ],
+    chapterId: 'c10-s2-ch13',
+    classGrade: 10,
+    category: 'Statistics & Probability',
+    labId: 'statistics-lab',
+  },
   {
     id: 'f-prob-event',
-    name: 'Classical Probability',
+    name: 'Classical Theoretical Probability',
     latex: 'P(E) = \\frac{n(E)}{n(S)}',
     description: 'Favourable outcomes divided by total equally likely outcomes in sample space.',
     variables: [
-      { symbol: 'n(E)', meaning: 'Count of favourable outcomes' },
-      { symbol: 'n(S)', meaning: 'Total sample space count' },
+      { symbol: 'n(E)', meaning: 'Number of outcomes favourable to event E' },
+      { symbol: 'n(S)', meaning: 'Total number of outcomes in sample space' },
     ],
     chapterId: 'c10-s2-prob',
     classGrade: 10,
@@ -254,10 +421,12 @@ export const allFormulasData: FormulaItem[] = [
   },
   {
     id: 'f-prob-comp',
-    name: 'Complementary Probability',
+    name: 'Complementary Event Probability',
     latex: 'P(\\bar{E}) = 1 - P(E)',
-    description: 'Probability that event E does not happen.',
-    variables: [],
+    description: 'Probability that event E does not occur.',
+    variables: [
+      { symbol: 'P(\\bar{E})', meaning: 'Complementary probability' },
+    ],
     chapterId: 'c10-s2-prob',
     classGrade: 10,
     category: 'Statistics & Probability',

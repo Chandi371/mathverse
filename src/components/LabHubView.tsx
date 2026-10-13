@@ -82,6 +82,30 @@ export const LabHubView: React.FC<LabHubViewProps> = ({ initialLabId = 'area-mod
       formula: 'CSA = 2πrh, TSA = 2πr(r+h)',
       description: 'Unroll curved 3D surfaces into flat 2D rectangles to understand surface area formulas.',
     },
+    {
+      id: 'linear-equations',
+      title: 'Pair of Linear Equations & Intersections',
+      grade: 'Class 10',
+      topic: 'Algebra',
+      formula: 'a₁x + b₁y = c₁, a₂x + b₂y = c₂',
+      description: 'Explore unique intersection, parallel, and coincident lines with ratio consistency checks.',
+    },
+    {
+      id: 'similar-triangles',
+      title: 'Thales Theorem (BPT) & Similar Triangles',
+      grade: 'Class 10',
+      topic: 'Geometry',
+      formula: 'AD/DB = AE/EC',
+      description: 'Slide parallel segment DE ∥ BC and watch side ratios and triangle similarity hold invariant.',
+    },
+    {
+      id: 'statistics-lab',
+      title: 'Central Tendency & Outlier Impact',
+      grade: 'Class 9 & 10',
+      topic: 'Statistics',
+      formula: 'Mean vs Median',
+      description: 'Inject extreme values into datasets to visually see Mean shift while Median stays robust.',
+    },
   ];
 
   return (

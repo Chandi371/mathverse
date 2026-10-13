@@ -8,6 +8,9 @@ import { QuadraticParabolaLab } from './QuadraticParabolaLab';
 import { ProbabilitySimulatorLab } from './ProbabilitySimulatorLab';
 import { CircleAreaLab } from './CircleAreaLab';
 import { CylinderNetLab } from './CylinderNetLab';
+import { LinearEquationsLab } from './LinearEquationsLab';
+import { SimilarTrianglesLab } from './SimilarTrianglesLab';
+import { StatisticsLab } from './StatisticsLab';
 
 interface LabDispatcherProps {
   labId: string;
@@ -33,6 +36,12 @@ export const InteractiveLabDispatcher: React.FC<LabDispatcherProps> = ({ labId }
       return <CircleAreaLab />;
     case 'cylinder-net':
       return <CylinderNetLab />;
+    case 'linear-equations':
+      return <LinearEquationsLab />;
+    case 'similar-triangles':
+      return <SimilarTrianglesLab />;
+    case 'statistics-lab':
+      return <StatisticsLab />;
     default:
       return (
         <div className="p-8 text-center text-slate-500 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
