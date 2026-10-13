@@ -163,18 +163,18 @@ export const FormulaLibrary: React.FC<FormulaLibraryProps> = ({
                 </div>
 
                 {/* KaTeX Formula Box */}
-                <div className="my-3 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-855 border border-slate-200/80 dark:border-slate-800 text-center overflow-x-auto">
+                <div className="my-3 p-3.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-center overflow-x-auto">
                   <MathView math={formula.latex} block />
                 </div>
 
-                <p className="text-xs text-slate-600 dark:text-slate-400 mb-3">
+                <p className="text-xs text-slate-700 dark:text-slate-200 mb-3">
                   {formula.description}
                 </p>
 
                 {/* Variable Breakdown */}
                 {formula.variables.length > 0 && (
-                  <div className="mb-3 space-y-1 bg-slate-50/70 dark:bg-slate-800/40 p-2.5 rounded-lg text-[11px] border border-slate-100 dark:border-slate-800">
-                    <span className="font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                  <div className="mb-3 space-y-1 bg-slate-100/80 dark:bg-slate-800/80 p-2.5 rounded-lg text-[11px] border border-slate-200 dark:border-slate-700">
+                    <span className="font-semibold text-slate-800 dark:text-slate-200 block mb-1">
                       Variable Symbols:
                     </span>
                     {formula.variables.map((v, i) => (
@@ -182,7 +182,7 @@ export const FormulaLibrary: React.FC<FormulaLibraryProps> = ({
                         <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400 shrink-0">
                           {v.symbol}:
                         </span>
-                        <span className="text-slate-500 dark:text-slate-400">{v.meaning}</span>
+                        <span className="text-slate-700 dark:text-slate-200">{v.meaning}</span>
                       </div>
                     ))}
                   </div>

@@ -1,5 +1,5 @@
-import React from 'react';
-import { Search, Compass, CheckCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, Compass, CheckCircle, Sun, Moon } from 'lucide-react';
 import type { UserProgress } from '../types/progress';
 
 interface NavbarProps {
@@ -20,6 +20,30 @@ export const Navbar: React.FC<NavbarProps> = ({
   progress,
 }) => {
   const completedCount = progress.completedChapterIds.length;
+
+  const [isDark, setIsDark] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('mathverse_theme');
+      if (saved) return saved === 'dark';
+      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      if (isDark) {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('mathverse_theme', 'dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('mathverse_theme', 'light');
+      }
+    } catch (e) {
+      console.warn('Error setting theme:', e);
+    }
+  }, [isDark]);
 
   return (
     <header className="sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 transition-colors">
@@ -125,11 +149,21 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
         </nav>
 
-        {/* Right Tools: Search & Progress Pill */}
+        {/* Right Tools: Search, Theme Toggle, & Progress Pill */}
         <div className="flex items-center gap-2">
+          {/* Theme Toggle Button */}
+          <button
+            onClick={() => setIsDark(!isDark)}
+            className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition"
+            title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            aria-label="Toggle theme"
+          >
+            {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-600" />}
+          </button>
+
           <button
             onClick={onOpenSearch}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-850 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 text-xs transition hover:border-indigo-300"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 text-xs transition hover:border-indigo-300"
             title="Search topics and formulas (Ctrl + K)"
           >
             <Search className="w-3.5 h-3.5 text-slate-400" />

@@ -138,7 +138,7 @@ export const PracticeStudio: React.FC<PracticeStudioProps> = ({ progress, onReco
             {currentQ.prompt}
           </h2>
           {currentQ.latexPrompt && (
-            <div className="p-3 bg-slate-50 dark:bg-slate-850 rounded-xl my-2">
+            <div className="p-3 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl my-2">
               <MathView math={currentQ.latexPrompt} block />
             </div>
           )}
@@ -167,10 +167,10 @@ export const PracticeStudio: React.FC<PracticeStudioProps> = ({ progress, onReco
             <div className="grid grid-cols-1 gap-2.5">
               {currentQ.options?.map((opt, i) => {
                 const isSelected = selectedOption === opt;
-                let optionStyle = 'border-slate-200 dark:border-slate-800 hover:border-indigo-300 bg-slate-50/50 dark:bg-slate-800/40';
+                let optionStyle = 'border-slate-200 dark:border-slate-700 hover:border-indigo-400 bg-slate-50 dark:bg-slate-800/80 text-slate-800 dark:text-slate-100';
 
                 if (isSelected) {
-                  optionStyle = 'border-indigo-600 dark:border-indigo-500 bg-indigo-50/70 dark:bg-indigo-950/50 text-indigo-950 dark:text-indigo-100 font-semibold';
+                  optionStyle = 'border-indigo-600 dark:border-indigo-500 bg-indigo-50/70 dark:bg-indigo-950/70 text-indigo-950 dark:text-white font-semibold';
                 }
 
                 if (submitted) {

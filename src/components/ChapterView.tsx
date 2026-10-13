@@ -106,7 +106,7 @@ export const ChapterView: React.FC<ChapterViewProps> = ({
               className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs whitespace-nowrap font-semibold transition border-b-2 ${
                 isActive
                   ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400 bg-indigo-50/70 dark:bg-indigo-950/50'
-                  : 'border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-850'
+                  : 'border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
               }`}
             >
               <Icon className="w-3.5 h-3.5" />
@@ -129,7 +129,7 @@ export const ChapterView: React.FC<ChapterViewProps> = ({
               <h2 className="text-xl font-bold text-slate-900 dark:text-white">
                 Why This Topic Matters
               </h2>
-              <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+              <p className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed">
                 {chapter.whyItMatters}
               </p>
             </div>
@@ -140,10 +140,10 @@ export const ChapterView: React.FC<ChapterViewProps> = ({
                 <Lightbulb className="w-4 h-4 text-amber-500" />
                 Required Prior Foundations
               </h3>
-              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs sm:text-sm text-slate-600 dark:text-slate-400">
+              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs sm:text-sm text-slate-700 dark:text-slate-200">
                 {chapter.priorKnowledge.map((pk, idx) => (
-                  <li key={idx} className="flex items-start gap-2 bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
-                    <span className="text-emerald-500 font-bold">✓</span>
+                  <li key={idx} className="flex items-start gap-2 bg-slate-100/80 dark:bg-slate-800/80 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
+                    <span className="text-emerald-500 font-bold shrink-0">✓</span>
                     <span>{pk}</span>
                   </li>
                 ))}
@@ -157,11 +157,11 @@ export const ChapterView: React.FC<ChapterViewProps> = ({
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {chapter.vocabulary.map((v, i) => (
-                  <div key={i} className="p-3.5 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-855">
-                    <span className="font-bold text-indigo-700 dark:text-indigo-300 text-xs sm:text-sm block">
+                  <div key={i} className="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100/90 dark:bg-slate-800/90 shadow-sm">
+                    <span className="font-bold text-indigo-700 dark:text-indigo-400 text-sm block mb-1">
                       {v.term}
                     </span>
-                    <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+                    <p className="text-xs text-slate-700 dark:text-slate-200 leading-relaxed">
                       {v.definition}
                     </p>
                   </div>
@@ -226,10 +226,10 @@ export const ChapterView: React.FC<ChapterViewProps> = ({
                   <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white mt-1">
                     {chapter.derivation.title}
                   </h2>
-                  <div className="my-3 p-3 bg-emerald-50/70 dark:bg-emerald-950/40 rounded-xl border border-emerald-200 dark:border-emerald-900/60 text-center">
+                  <div className="my-3 p-3 bg-emerald-50/70 dark:bg-emerald-950/40 rounded-xl border border-emerald-200 dark:border-emerald-800 text-center">
                     <MathView math={chapter.derivation.targetFormula} block />
                   </div>
-                  <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                  <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-200 leading-relaxed">
                     <strong>Starting Premise:</strong> {chapter.derivation.startingObservation}
                   </p>
                 </div>
@@ -242,17 +242,17 @@ export const ChapterView: React.FC<ChapterViewProps> = ({
                   {chapter.derivation.steps.map((st) => (
                     <div
                       key={st.stepNumber}
-                      className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-855 space-y-2 text-xs sm:text-sm"
+                      className="p-4 rounded-xl border border-slate-200 dark:border-slate-750 bg-slate-100/80 dark:bg-slate-800/80 space-y-2 text-xs sm:text-sm"
                     >
                       <div className="flex items-center justify-between">
                         <span className="font-bold text-indigo-600 dark:text-indigo-400 text-xs">
                           Step {st.stepNumber}
                         </span>
-                        <span className="text-[11px] text-slate-400 italic">
+                        <span className="text-[11px] text-slate-500 dark:text-slate-300 italic">
                           Justification: {st.justification}
                         </span>
                       </div>
-                      <p className="font-medium text-slate-800 dark:text-slate-200">
+                      <p className="font-medium text-slate-800 dark:text-slate-100">
                         {st.statement}
                       </p>
                       {st.latex && (
@@ -265,7 +265,7 @@ export const ChapterView: React.FC<ChapterViewProps> = ({
                 </div>
 
                 {/* Conclusion */}
-                <div className="p-4 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-900 text-xs sm:text-sm text-indigo-950 dark:text-indigo-200">
+                <div className="p-4 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 text-xs sm:text-sm text-indigo-950 dark:text-indigo-100">
                   <strong>Conclusion:</strong> {chapter.derivation.conclusion}
                 </div>
               </div>
@@ -304,7 +304,7 @@ export const ChapterView: React.FC<ChapterViewProps> = ({
                 <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white mt-1">
                   Memory Lab
                 </h2>
-                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1">
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-1">
                   Mnemonic acronyms, visual hooks, and specific AP SSC examination pitfalls to guard against.
                 </p>
               </div>
@@ -313,19 +313,19 @@ export const ChapterView: React.FC<ChapterViewProps> = ({
                 {chapter.memoryLab?.map((trick, i) => (
                   <div
                     key={i}
-                    className="p-4 rounded-xl border border-purple-200 dark:border-purple-900/60 bg-purple-50/40 dark:bg-purple-950/30 space-y-2 text-xs sm:text-sm"
+                    className="p-4 rounded-xl border border-purple-200 dark:border-purple-800 bg-purple-50/50 dark:bg-purple-950/40 space-y-2 text-xs sm:text-sm"
                   >
                     <span className="font-bold text-purple-900 dark:text-purple-200 block text-sm">
                       {trick.title}
                     </span>
-                    <div className="p-2 bg-white dark:bg-slate-900 rounded-lg border border-purple-200 dark:border-purple-800 font-mono text-purple-700 dark:text-purple-300 font-bold text-center">
+                    <div className="p-2.5 bg-white dark:bg-slate-900 rounded-lg border border-purple-200 dark:border-purple-800 font-mono text-purple-700 dark:text-purple-300 font-bold text-center">
                       "{trick.mnemonic}"
                     </div>
-                    <p className="text-slate-700 dark:text-slate-300 text-xs">
+                    <p className="text-slate-700 dark:text-slate-200 text-xs">
                       <strong>Meaning:</strong> {trick.meaning}
                     </p>
-                    <div className="flex items-start gap-1.5 text-xs text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 p-2 rounded-lg border border-amber-200 dark:border-amber-900">
-                      <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5 text-amber-600" />
+                    <div className="flex items-start gap-1.5 text-xs text-amber-900 dark:text-amber-200 bg-amber-50 dark:bg-amber-950/70 p-2.5 rounded-lg border border-amber-200 dark:border-amber-800">
+                      <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
                       <span><strong>Board Tip:</strong> {trick.boardExamTip}</span>
                     </div>
                   </div>
@@ -367,28 +367,28 @@ export const ChapterView: React.FC<ChapterViewProps> = ({
                     <h3 className="text-lg font-bold text-slate-900 dark:text-white mt-0.5">
                       {ex.title}
                     </h3>
-                    <p className="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300 mt-2 bg-slate-50 dark:bg-slate-855 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
+                    <p className="text-xs sm:text-sm font-medium text-slate-800 dark:text-slate-100 mt-2 bg-slate-100/90 dark:bg-slate-800/90 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700">
                       <strong>Problem:</strong> {ex.problemStatement}
                     </p>
                   </div>
 
                   {/* Given & Strategy */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                    <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
-                      <span className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                    <div className="p-3 rounded-xl bg-slate-100/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700">
+                      <span className="font-bold text-slate-800 dark:text-slate-100 block mb-1">
                         Given Information:
                       </span>
-                      <ul className="list-disc pl-4 space-y-0.5 text-slate-600 dark:text-slate-400">
+                      <ul className="list-disc pl-4 space-y-0.5 text-slate-700 dark:text-slate-200">
                         {ex.given.map((g, gi) => (
                           <li key={gi}>{g}</li>
                         ))}
                       </ul>
                     </div>
-                    <div className="p-3 rounded-xl bg-indigo-50/60 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900">
+                    <div className="p-3 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800">
                       <span className="font-bold text-indigo-900 dark:text-indigo-200 block mb-1">
                         Strategic Method:
                       </span>
-                      <p className="text-indigo-950 dark:text-indigo-300">{ex.strategy}</p>
+                      <p className="text-indigo-950 dark:text-indigo-200 leading-relaxed">{ex.strategy}</p>
                     </div>
                   </div>
 
@@ -400,16 +400,16 @@ export const ChapterView: React.FC<ChapterViewProps> = ({
                     {ex.steps.map((st) => (
                       <div
                         key={st.stepNumber}
-                        className="p-3 rounded-xl bg-slate-50/70 dark:bg-slate-855 border border-slate-100 dark:border-slate-800 text-xs sm:text-sm space-y-1"
+                        className="p-3.5 rounded-xl bg-slate-100/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm space-y-1"
                       >
-                        <div className="font-semibold text-slate-800 dark:text-slate-200">
+                        <div className="font-semibold text-slate-900 dark:text-slate-100">
                           Step {st.stepNumber}: {st.title}
                         </div>
-                        <p className="text-xs text-slate-600 dark:text-slate-400">
+                        <p className="text-xs text-slate-700 dark:text-slate-200">
                           {st.explanation}
                         </p>
                         {st.latex && (
-                          <div className="p-2 bg-white dark:bg-slate-900 rounded-lg text-center font-mono my-1 border border-slate-200 dark:border-slate-800">
+                          <div className="p-2 bg-white dark:bg-slate-900 rounded-lg text-center font-mono my-1 border border-slate-200 dark:border-slate-700">
                             <MathView math={st.latex} block />
                           </div>
                         )}
@@ -419,10 +419,10 @@ export const ChapterView: React.FC<ChapterViewProps> = ({
 
                   {/* Common mistake & Sanity check */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-xs">
-                    <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-900 dark:text-rose-200">
+                    <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 text-rose-900 dark:text-rose-100">
                       <strong>Common Exam Mistake:</strong> {ex.commonMistake}
                     </div>
-                    <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 text-emerald-900 dark:text-emerald-200">
+                    <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-100">
                       <strong>Sanity Check:</strong> {ex.sanityCheck}
                     </div>
                   </div>
@@ -459,7 +459,7 @@ export const ChapterView: React.FC<ChapterViewProps> = ({
                 <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white mt-1">
                   Chapter Practice ({chapter.practiceQuestions.length} Questions)
                 </h2>
-                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1">
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-1">
                   Attempt these curated questions with guided discovery hints.
                 </p>
               </div>
@@ -468,7 +468,7 @@ export const ChapterView: React.FC<ChapterViewProps> = ({
                 {chapter.practiceQuestions.map((q, idx) => (
                   <div
                     key={q.id}
-                    className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-855 space-y-3"
+                    className="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100/80 dark:bg-slate-800/80 space-y-3"
                   >
                     <div className="flex justify-between items-center text-xs">
                       <span className="font-bold text-indigo-600 dark:text-indigo-400">
@@ -486,11 +486,11 @@ export const ChapterView: React.FC<ChapterViewProps> = ({
                         </span>
                       </div>
                     </div>
-                    <p className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200">
+                    <p className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-slate-100">
                       {q.prompt}
                     </p>
-                    <div className="text-xs text-slate-500 italic bg-white dark:bg-slate-900 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800">
-                      <strong>Answer / Solution:</strong> {q.explanation}
+                    <div className="text-xs text-slate-700 dark:text-slate-200 italic bg-white dark:bg-slate-900 p-3 rounded-lg border border-slate-200 dark:border-slate-700">
+                      <strong className="text-slate-900 dark:text-white not-italic">Answer / Solution:</strong> {q.explanation}
                     </div>
                   </div>
                 ))}
@@ -533,9 +533,9 @@ export const ChapterView: React.FC<ChapterViewProps> = ({
                 <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">
                   Key Learnings to Remember:
                 </h3>
-                <ul className="space-y-2 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
+                <ul className="space-y-2 text-xs sm:text-sm text-slate-800 dark:text-slate-100">
                   {chapter.revisionSummary.corePoints.map((cp, cpi) => (
-                    <li key={cpi} className="flex items-start gap-2 bg-slate-50 dark:bg-slate-800/40 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                    <li key={cpi} className="flex items-start gap-2 bg-slate-100/80 dark:bg-slate-800/80 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
                       <span className="text-indigo-500 font-bold shrink-0">▸</span>
                       <span>{cp}</span>
                     </li>
@@ -549,9 +549,9 @@ export const ChapterView: React.FC<ChapterViewProps> = ({
                   <AlertTriangle className="w-4 h-4 text-rose-500" />
                   Common Exam Traps to Avoid:
                 </h3>
-                <ul className="space-y-2 text-xs sm:text-sm text-rose-950 dark:text-rose-200">
+                <ul className="space-y-2 text-xs sm:text-sm text-rose-950 dark:text-rose-100">
                   {chapter.revisionSummary.commonTraps.map((ct, cti) => (
-                    <li key={cti} className="flex items-start gap-2 bg-rose-50/70 dark:bg-rose-950/40 p-2.5 rounded-xl border border-rose-200 dark:border-rose-900">
+                    <li key={cti} className="flex items-start gap-2 bg-rose-50/80 dark:bg-rose-950/60 p-3 rounded-xl border border-rose-200 dark:border-rose-800">
                       <span className="text-rose-500 font-bold shrink-0">⚠</span>
                       <span>{ct}</span>
                     </li>

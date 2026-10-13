@@ -154,10 +154,10 @@ export const QuadraticParabolaLab: React.FC = () => {
 
           {/* Discriminant Result Card */}
           <div className="space-y-2">
-            <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-850">
+            <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800">
               <div className="flex justify-between items-center">
-                <span className="text-xs font-semibold text-slate-500 uppercase">Discriminant D:</span>
-                <span className="font-mono text-base font-bold">
+                <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase">Discriminant D:</span>
+                <span className="font-mono text-base font-bold text-slate-900 dark:text-white">
                   {b}² - 4({a})({c}) = <span className="text-rose-600 dark:text-rose-400">{disc}</span>
                 </span>
               </div>
