@@ -31,7 +31,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
     selectedClass === 9 ? c9Chapters : selectedClass === 10 ? c10Chapters : allCurriculumChapters;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 pb-24 space-y-12">
+    <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-6 pb-24 space-y-8 sm:space-y-12">
       {/* Hero Section */}
       <section className="text-center space-y-4 max-w-3xl mx-auto pt-2 sm:pt-6">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/70 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 text-xs font-bold">

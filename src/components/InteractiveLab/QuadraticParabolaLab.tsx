@@ -96,9 +96,9 @@ export const QuadraticParabolaLab: React.FC = () => {
         Vary coefficients <span className="font-mono font-bold text-blue-600">a</span>, <span className="font-mono font-bold text-emerald-600">b</span>, and <span className="font-mono font-bold text-purple-600">c</span>. The sign of the discriminant determines the number of times the parabola intersects the x-axis!
       </p>
 
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
-        {/* Controls Column */}
-        <div className="md:col-span-5 space-y-4">
+      <div className="flex flex-col md:grid md:grid-cols-12 gap-5 md:gap-6 items-center">
+        {/* Controls Column (order-2 on mobile, order-1 on desktop) */}
+        <div className="w-full order-2 md:order-1 md:col-span-5 space-y-3.5 sm:space-y-4">
           <div className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3">
             <div>
               <div className="flex justify-between items-center text-sm font-semibold mb-1 text-slate-700 dark:text-slate-300">
@@ -198,8 +198,8 @@ export const QuadraticParabolaLab: React.FC = () => {
           </div>
         </div>
 
-        {/* Visual Parabola SVG Column */}
-        <div className="md:col-span-7 flex flex-col items-center justify-center">
+        {/* Visual Parabola SVG Column (order-1 on mobile, order-2 on desktop) */}
+        <div className="w-full order-1 md:order-2 md:col-span-7 flex flex-col items-center justify-center">
           <div className="bg-slate-50 dark:bg-slate-800/50 p-2 rounded-2xl border border-slate-200 dark:border-slate-800">
             <svg
               width={svgW}

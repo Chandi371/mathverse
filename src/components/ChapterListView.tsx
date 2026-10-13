@@ -29,7 +29,7 @@ export const ChapterListView: React.FC<ChapterListViewProps> = ({
   });
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 pb-24 space-y-6">
+    <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-6 pb-24 space-y-4 sm:space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <span className="text-xs uppercase font-bold tracking-wider px-2.5 py-1 rounded-full bg-indigo-100 dark:bg-indigo-950/70 text-indigo-800 dark:text-indigo-300">
@@ -81,7 +81,7 @@ export const ChapterListView: React.FC<ChapterListViewProps> = ({
             <div
               key={ch.id}
               onClick={() => onSelectChapter(ch.id)}
-              className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-indigo-400 dark:hover:border-indigo-600 cursor-pointer shadow-sm hover:shadow transition flex flex-col justify-between group"
+              className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-indigo-400 dark:hover:border-indigo-600 cursor-pointer shadow-sm hover:shadow transition flex flex-col justify-between group"
             >
               <div>
                 <div className="flex items-center justify-between gap-1 mb-2">

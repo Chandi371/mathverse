@@ -36,3 +36,17 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Touch and range slider mobile optimization */
+input[type="range"] {
+  touch-action: pan-y;
+  cursor: pointer;
+}
+
+/* Prevent math expressions from overflowing viewport on small screens */
+.katex {
+  max-width: 100%;
+}
+.katex-html {
+  max-width: 100%;
+}

@@ -53,9 +53,9 @@ export const ArithmeticProgressionLab: React.FC = () => {
         Tweak first term <span className="font-mono font-bold text-cyan-600">a</span>, common difference <span className="font-mono font-bold text-blue-600">d</span>, and total terms <span className="font-mono font-bold text-purple-600">n</span>. Observe the linear progression and discover why Gauss's sum formula works!
       </p>
 
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
-        {/* Sliders & Values */}
-        <div className="md:col-span-5 space-y-4">
+      <div className="flex flex-col md:grid md:grid-cols-12 gap-5 md:gap-6 items-start">
+        {/* Sliders & Values (order-2 on mobile, order-1 on desktop) */}
+        <div className="w-full order-2 md:order-1 md:col-span-5 space-y-3.5 sm:space-y-4">
           <div className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3">
             <div>
               <div className="flex justify-between items-center text-sm font-semibold mb-1 text-slate-700 dark:text-slate-300">
@@ -133,8 +133,8 @@ export const ArithmeticProgressionLab: React.FC = () => {
           </div>
         </div>
 
-        {/* Visual Bar & Sequence Column */}
-        <div className="md:col-span-7 space-y-4">
+        {/* Visual Bar & Sequence Column (order-1 on mobile, order-2 on desktop) */}
+        <div className="w-full order-1 md:order-2 md:col-span-7 space-y-4">
           <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
             <div className="text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
               Visual Bar Representation of Terms:

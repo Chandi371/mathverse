@@ -78,9 +78,9 @@ export const ProbabilitySimulatorLab: React.FC = () => {
         Run trials and watch empirical frequencies converge toward theoretical probabilities <span className="font-semibold">P(E) = n(E) / n(S)</span>.
       </p>
 
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
-        {/* Controls Column */}
-        <div className="md:col-span-5 space-y-4">
+      <div className="flex flex-col md:grid md:grid-cols-12 gap-5 md:gap-6 items-start">
+        {/* Controls Column (order-2 on mobile, order-1 on desktop) */}
+        <div className="w-full order-2 md:order-1 md:col-span-5 space-y-3.5 sm:space-y-4">
           <div className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3">
             <div className="flex justify-between items-center">
               <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
@@ -140,8 +140,8 @@ export const ProbabilitySimulatorLab: React.FC = () => {
           </div>
         </div>
 
-        {/* Bar Chart & Comparison Column */}
-        <div className="md:col-span-7 space-y-4">
+        {/* Bar Chart & Comparison Column (order-1 on mobile, order-2 on desktop) */}
+        <div className="w-full order-1 md:order-2 md:col-span-7 space-y-4">
           <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
             <div className="flex items-center justify-between text-xs font-semibold text-slate-500 mb-3">
               <span className="flex items-center gap-1.5">

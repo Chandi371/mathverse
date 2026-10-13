@@ -114,9 +114,9 @@ export const LinearEquationsLab: React.FC = () => {
         <span className="font-mono font-bold text-purple-600">c₁/c₂</span> determines consistency!
       </p>
 
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
-        {/* Controls Column */}
-        <div className="md:col-span-5 space-y-4">
+      <div className="flex flex-col md:grid md:grid-cols-12 gap-5 md:gap-6 items-center">
+        {/* Controls Column (order-2 on mobile, order-1 on desktop) */}
+        <div className="w-full order-2 md:order-1 md:col-span-5 space-y-3.5 sm:space-y-4">
           <div className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3">
             {/* Line 1 Inputs */}
             <div>
@@ -249,14 +249,12 @@ export const LinearEquationsLab: React.FC = () => {
           </div>
         </div>
 
-        {/* Visual Graph Column */}
-        <div className="md:col-span-7 flex flex-col items-center justify-center">
-          <div className="bg-slate-50 dark:bg-slate-800/50 p-2 rounded-2xl border border-slate-200 dark:border-slate-800">
+        {/* Visual Graph Column (order-1 on mobile, order-2 on desktop) */}
+        <div className="w-full order-1 md:order-2 md:col-span-7 flex flex-col items-center justify-center">
+          <div className="bg-slate-50 dark:bg-slate-800/50 p-2 sm:p-3 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-center w-full max-w-[280px] sm:max-w-md">
             <svg
-              width={svgSize}
-              height={svgSize}
               viewBox={`0 0 ${svgSize} ${svgSize}`}
-              className="max-w-full h-auto select-none bg-white dark:bg-slate-900 rounded-xl"
+              className="w-full max-w-[260px] sm:max-w-[320px] aspect-square select-none bg-white dark:bg-slate-900 rounded-xl"
             >
               {/* Axes */}
               <line

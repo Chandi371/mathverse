@@ -111,10 +111,10 @@ export const AreaModelLab: React.FC = () => {
         )}
       </p>
 
-      {/* Main Grid: Controls vs Visual Canvas */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
-        {/* Controls Column */}
-        <div className="md:col-span-5 space-y-4">
+      {/* Main Grid: Visual Canvas first on mobile, side-by-side on desktop */}
+      <div className="flex flex-col md:grid md:grid-cols-12 gap-5 md:gap-6 items-center">
+        {/* Controls Column (order-2 on mobile, order-1 on desktop) */}
+        <div className="w-full order-2 md:order-1 md:col-span-5 space-y-3.5 sm:space-y-4">
           <div className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-4">
             <div>
               <div className="flex justify-between items-center text-sm font-semibold mb-1 text-slate-700 dark:text-slate-200">
@@ -252,9 +252,9 @@ export const AreaModelLab: React.FC = () => {
           </div>
         </div>
 
-        {/* Visual SVG Canvas Column */}
-        <div className="md:col-span-7 flex flex-col items-center justify-center">
-          <div className="relative bg-slate-100/70 dark:bg-slate-800/50 p-2 sm:p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-center w-full max-w-sm sm:max-w-md">
+        {/* Visual SVG Canvas Column (order-1 on mobile, order-2 on desktop) */}
+        <div className="w-full order-1 md:order-2 md:col-span-7 flex flex-col items-center justify-center">
+          <div className="relative bg-slate-100/70 dark:bg-slate-800/50 p-2 sm:p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-center w-full max-w-[280px] sm:max-w-md">
             {/* SVG 1: (a + b)² Mode */}
             {mode === 'sum-square' && (() => {
               const totalSide = a + safeB;

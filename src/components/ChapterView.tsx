@@ -135,33 +135,33 @@ export const ChapterView: React.FC<ChapterViewProps> = ({
             </div>
 
             {/* Prior Knowledge */}
-            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 sm:p-6 shadow-sm space-y-3">
-              <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 sm:p-6 shadow-xs space-y-3">
+              <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <Lightbulb className="w-4 h-4 text-amber-500" />
                 Required Prior Foundations
               </h3>
-              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs sm:text-sm text-slate-700 dark:text-slate-200">
+              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs sm:text-sm text-slate-800 dark:text-slate-100 font-medium">
                 {chapter.priorKnowledge.map((pk, idx) => (
-                  <li key={idx} className="flex items-start gap-2 bg-slate-100/80 dark:bg-slate-800/80 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
-                    <span className="text-emerald-500 font-bold shrink-0">✓</span>
-                    <span>{pk}</span>
+                  <li key={idx} className="flex items-start gap-2.5 bg-slate-50 dark:bg-slate-800/70 p-3 rounded-xl border border-slate-200/80 dark:border-slate-700/80">
+                    <span className="text-emerald-500 dark:text-emerald-400 font-bold shrink-0">✓</span>
+                    <span className="leading-snug">{pk}</span>
                   </li>
                 ))}
               </ul>
             </div>
 
             {/* Core Vocabulary */}
-            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 sm:p-6 shadow-sm space-y-3">
-              <h3 className="text-base font-bold text-slate-900 dark:text-white">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 sm:p-6 shadow-xs space-y-3">
+              <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
                 Key Mathematical Vocabulary
               </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                 {chapter.vocabulary.map((v, i) => (
-                  <div key={i} className="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100/90 dark:bg-slate-800/90 shadow-sm">
-                    <span className="font-bold text-indigo-700 dark:text-indigo-400 text-sm block mb-1">
+                  <div key={i} className="p-3.5 sm:p-4 rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-800/70 shadow-xs">
+                    <span className="font-bold text-indigo-700 dark:text-indigo-300 text-xs sm:text-sm block mb-1">
                       {v.term}
                     </span>
-                    <p className="text-xs text-slate-700 dark:text-slate-200 leading-relaxed">
+                    <p className="text-xs text-slate-800 dark:text-slate-100 leading-relaxed font-normal">
                       {v.definition}
                     </p>
                   </div>
@@ -169,10 +169,10 @@ export const ChapterView: React.FC<ChapterViewProps> = ({
               </div>
             </div>
 
-            <div className="flex justify-end">
+            <div className="flex justify-end pt-1">
               <button
                 onClick={() => setActiveSection('lab')}
-                className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-xs sm:text-sm font-semibold hover:bg-indigo-700 shadow-sm transition"
+                className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-5 py-3 sm:py-2.5 rounded-xl bg-indigo-600 text-white text-xs sm:text-sm font-semibold hover:bg-indigo-700 shadow-sm transition active:scale-[0.98]"
               >
                 <span>Proceed to Interactive Lab</span>
                 <ChevronRight className="w-4 h-4" />

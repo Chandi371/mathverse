@@ -50,9 +50,9 @@ export const StatisticsLab: React.FC = () => {
         <span className="font-bold text-emerald-600">Median</span> respond to data values. Toggle an extreme outlier to visually witness why the mean gets heavily distorted while the median remains stable!
       </p>
 
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
-        {/* Controls Column */}
-        <div className="md:col-span-5 space-y-4">
+      <div className="flex flex-col md:grid md:grid-cols-12 gap-5 md:gap-6 items-center">
+        {/* Controls Column (order-2 on mobile, order-1 on desktop) */}
+        <div className="w-full order-2 md:order-1 md:col-span-5 space-y-3.5 sm:space-y-4">
           <div className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
@@ -150,8 +150,8 @@ export const StatisticsLab: React.FC = () => {
           )}
         </div>
 
-        {/* Visual Dot Plot & Indicator Lines */}
-        <div className="md:col-span-7 flex flex-col items-center justify-center">
+        {/* Visual Dot Plot & Indicator Lines (order-1 on mobile, order-2 on desktop) */}
+        <div className="w-full order-1 md:order-2 md:col-span-7 flex flex-col items-center justify-center">
           <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 w-full max-w-sm sm:max-w-md space-y-4">
             <div className="flex items-center justify-between text-xs font-bold text-slate-500">
               <span className="flex items-center gap-1.5">

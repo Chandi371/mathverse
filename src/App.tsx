@@ -90,7 +90,7 @@ export function App() {
       />
 
       {/* Main View Area */}
-      <main className="flex-1 w-full">
+      <main className="flex-1 w-full pb-24 lg:pb-8">
         {activeTab === 'home' && (
           <HomeView
             onSelectChapter={handleSelectChapter}

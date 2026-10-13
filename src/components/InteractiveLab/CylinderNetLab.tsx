@@ -47,9 +47,9 @@ export const CylinderNetLab: React.FC = () => {
         Adjust radius <span className="font-mono font-bold text-orange-600">r</span> and height <span className="font-mono font-bold text-blue-600">h</span>. Unrolling the curved cylindrical face unfolds it into a flat rectangle of length <span className="font-mono font-bold text-orange-600">2πr</span> and height <span className="font-mono font-bold text-blue-600">h</span>!
       </p>
 
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
-        {/* Controls Column */}
-        <div className="md:col-span-5 space-y-4">
+      <div className="flex flex-col md:grid md:grid-cols-12 gap-5 md:gap-6 items-center">
+        {/* Controls Column (order-2 on mobile, order-1 on desktop) */}
+        <div className="w-full order-2 md:order-1 md:col-span-5 space-y-3.5 sm:space-y-4">
           <div className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3">
             <div>
               <div className="flex justify-between items-center text-sm font-semibold mb-1 text-slate-700 dark:text-slate-300">
@@ -115,8 +115,8 @@ export const CylinderNetLab: React.FC = () => {
           </div>
         </div>
 
-        {/* Visual Net / 3D Canvas Column */}
-        <div className="md:col-span-7 flex flex-col items-center justify-center">
+        {/* Visual Net / 3D Canvas Column (order-1 on mobile, order-2 on desktop) */}
+        <div className="w-full order-1 md:order-2 md:col-span-7 flex flex-col items-center justify-center">
           <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col items-center w-full max-w-sm sm:max-w-md">
             {viewMode === 'net' ? (
               /* 2D Unfolded Net */

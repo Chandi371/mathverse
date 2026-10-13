@@ -61,9 +61,9 @@ export const CoordinateGeometryLab: React.FC = () => {
         Move Point <span className="font-bold text-blue-600">A</span> and Point <span className="font-bold text-rose-600">B</span>. Notice how the distance formula is simply the Pythagorean theorem applied to the horizontal step (Δx) and vertical step (Δy)!
       </p>
 
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
-        {/* Coordinates Inputs */}
-        <div className="md:col-span-5 space-y-4">
+      <div className="flex flex-col md:grid md:grid-cols-12 gap-5 md:gap-6 items-center">
+        {/* Coordinates Inputs (order-2 on mobile, order-1 on desktop) */}
+        <div className="w-full order-2 md:order-1 md:col-span-5 space-y-3.5 sm:space-y-4">
           <div className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3">
             {/* Point A */}
             <div>
@@ -152,14 +152,12 @@ export const CoordinateGeometryLab: React.FC = () => {
           </div>
         </div>
 
-        {/* Interactive Coordinate SVG */}
-        <div className="md:col-span-7 flex flex-col items-center justify-center">
-          <div className="bg-slate-50 dark:bg-slate-800/50 p-2 rounded-2xl border border-slate-200 dark:border-slate-800">
+        {/* Interactive Coordinate SVG (order-1 on mobile, order-2 on desktop) */}
+        <div className="w-full order-1 md:order-2 md:col-span-7 flex flex-col items-center justify-center">
+          <div className="bg-slate-50 dark:bg-slate-800/50 p-2 sm:p-3 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-center w-full max-w-[280px] sm:max-w-md">
             <svg
-              width={svgSize}
-              height={svgSize}
               viewBox={`0 0 ${svgSize} ${svgSize}`}
-              className="max-w-full h-auto select-none"
+              className="w-full max-w-[260px] sm:max-w-[320px] aspect-square select-none"
             >
               {/* Grid Lines */}
               {Array.from({ length: range + 1 }).map((_, i) => {
