@@ -47,14 +47,17 @@ const server = http.createServer((req, res) => {
       return;
     }
     const isHtml = ext === '.html' || ext === '';
-    res.writeHead(200, {
+    const headers = {
       'Content-Type': contentType,
       'Cache-Control': isHtml
         ? 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
         : 'public, max-age=31536000, immutable',
-      'Pragma': isHtml ? 'no-cache' : undefined,
-      'Expires': isHtml ? '0' : undefined,
-    });
+    };
+    if (isHtml) {
+      headers['Pragma'] = 'no-cache';
+      headers['Expires'] = '0';
+    }
+    res.writeHead(200, headers);
     res.end(content);
   });
 });
