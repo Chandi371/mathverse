@@ -30,89 +30,65 @@ export const AreaModelLab: React.FC = () => {
   const drawWidth = svgSize - 2 * padding;
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 sm:p-6 shadow-sm space-y-5">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-3.5 sm:p-6 shadow-sm space-y-3 sm:space-y-4">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
+      <div className="flex items-center justify-between gap-2 pb-2.5 sm:pb-3 border-b border-slate-100 dark:border-slate-800">
         <div>
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
             Interactive Mathematics Lab
           </span>
-          <h3 className="text-lg font-bold text-slate-900 dark:text-white mt-1">
+          <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mt-0.5">
             Geometric Area Models for Algebraic Identities
           </h3>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={resetValues}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-            title="Reset sliders to default"
-          >
-            <RefreshCw className="w-4 h-4" />
-          </button>
-        </div>
+        <button
+          onClick={resetValues}
+          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition shrink-0"
+          title="Reset sliders to default"
+        >
+          <RefreshCw className="w-4 h-4" />
+        </button>
       </div>
 
-      {/* Mode Switcher Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+      {/* Mode Switcher Tabs - Compact on Mobile */}
+      <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
         <button
           onClick={() => setMode('sum-square')}
-          className={`px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition border ${
+          className={`py-1.5 sm:py-2 px-1 text-center rounded-xl text-xs font-semibold transition border ${
             mode === 'sum-square'
               ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
               : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100'
           }`}
         >
-          1. (a + b)² = a² + 2ab + b²
+          <span className="sm:hidden">(a + b)²</span>
+          <span className="hidden sm:inline">1. (a + b)² = a² + 2ab + b²</span>
         </button>
         <button
           onClick={() => setMode('diff-square')}
-          className={`px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition border ${
+          className={`py-1.5 sm:py-2 px-1 text-center rounded-xl text-xs font-semibold transition border ${
             mode === 'diff-square'
               ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
               : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100'
           }`}
         >
-          2. (a - b)² = a² - 2ab + b²
+          <span className="sm:hidden">(a - b)²</span>
+          <span className="hidden sm:inline">2. (a - b)² = a² - 2ab + b²</span>
         </button>
         <button
           onClick={() => setMode('diff-squares')}
-          className={`px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition border ${
+          className={`py-1.5 sm:py-2 px-1 text-center rounded-xl text-xs font-semibold transition border ${
             mode === 'diff-squares'
               ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
               : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100'
           }`}
         >
-          3. a² - b² = (a - b)(a + b)
+          <span className="sm:hidden">a² - b²</span>
+          <span className="hidden sm:inline">3. a² - b² = (a - b)(a + b)</span>
         </button>
       </div>
 
-      {/* Educational Prompt */}
-      <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-        {mode === 'sum-square' && (
-          <>
-            Adjust dimensions <span className="font-mono font-bold text-blue-600">a</span> and{' '}
-            <span className="font-mono font-bold text-emerald-600">b</span>. Observe how the large square
-            of side <span className="font-mono font-bold">(a + b)</span> is naturally partitioned into four rectangular regions!
-          </>
-        )}
-        {mode === 'diff-square' && (
-          <>
-            Start with a square of side <span className="font-mono font-bold text-blue-600">a</span>. Subtract two strips of dimensions{' '}
-            <span className="font-mono font-bold text-amber-600">a × b</span>. The bottom-right corner{' '}
-            <span className="font-mono font-bold text-rose-600">b²</span> was subtracted twice, which is why it must be added back!
-          </>
-        )}
-        {mode === 'diff-squares' && (
-          <>
-            Start with square <span className="font-mono font-bold text-blue-600">a²</span> and cut away corner square{' '}
-            <span className="font-mono font-bold text-rose-600">b²</span>. The remaining L-shape slices into two pieces that rearrange into a single rectangle of{' '}
-            <span className="font-mono font-bold text-indigo-600">(a - b) × (a + b)</span>!
-          </>
-        )}
-      </p>
-
       {/* Main Grid: Visual Canvas first on mobile, side-by-side on desktop */}
-      <div className="flex flex-col md:grid md:grid-cols-12 gap-5 md:gap-6 items-center">
+      <div className="flex flex-col md:grid md:grid-cols-12 gap-3.5 sm:gap-6 items-center pt-1">
         {/* Controls Column (order-2 on mobile, order-1 on desktop) */}
         <div className="w-full order-2 md:order-1 md:col-span-5 space-y-3.5 sm:space-y-4">
           <div className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-4">
@@ -249,6 +225,19 @@ export const AreaModelLab: React.FC = () => {
                 </div>
               </div>
             )}
+
+            {/* Educational Takeaway */}
+            <div className="pt-1.5 border-t border-indigo-200 dark:border-indigo-800 text-[11px] text-slate-600 dark:text-slate-300 leading-snug">
+              {mode === 'sum-square' && (
+                <span><strong>Core Takeaway:</strong> Square of side (a+b) naturally splits into 4 regions: 1 blue square (a²), 2 identical orange rectangles (2ab), and 1 green square (b²).</span>
+              )}
+              {mode === 'diff-square' && (
+                <span><strong>Core Takeaway:</strong> Subtracting 2 strips of (a×b) removes the corner square (b²) twice, which is why +b² must be added back!</span>
+              )}
+              {mode === 'diff-squares' && (
+                <span><strong>Core Takeaway:</strong> Cutting corner b² from a² leaves an L-shape that seamlessly rearranges into a single rectangle of (a - b) × (a + b).</span>
+              )}
+            </div>
           </div>
         </div>
 

@@ -31,15 +31,15 @@ export const HomeView: React.FC<HomeViewProps> = ({
     selectedClass === 9 ? c9Chapters : selectedClass === 10 ? c10Chapters : allCurriculumChapters;
 
   return (
-    <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-6 pb-24 space-y-8 sm:space-y-12">
+    <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3 sm:py-6 pb-24 space-y-6 sm:space-y-12">
       {/* Hero Section */}
-      <section className="text-center space-y-4 max-w-3xl mx-auto pt-2 sm:pt-6">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/70 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 text-xs font-bold">
+      <section className="text-center space-y-3 sm:space-y-4 max-w-3xl mx-auto pt-1 sm:pt-4">
+        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/70 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 text-[11px] sm:text-xs font-bold">
           <Sparkles className="w-3.5 h-3.5" />
           <span>Andhra Pradesh State Board (SSC) • Classes 9 &amp; 10</span>
         </div>
 
-        <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-slate-900 dark:text-white leading-[1.15]">
+        <h1 className="text-2xl sm:text-5xl font-black tracking-tight text-slate-900 dark:text-white leading-[1.15]">
           Understand Mathematics.{' '}
           <span className="bg-gradient-to-r from-indigo-600 via-indigo-500 to-cyan-500 bg-clip-text text-transparent">
             Don't Just Memorise It.
@@ -47,11 +47,22 @@ export const HomeView: React.FC<HomeViewProps> = ({
         </h1>
 
         {/* Central Learning Cycle Banner */}
-        <div className="p-3 sm:p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
-          <span className="text-[10px] uppercase font-bold tracking-widest text-slate-400 block mb-1">
+        <div className="p-2.5 sm:p-4 rounded-xl sm:rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs max-w-2xl mx-auto">
+          <span className="text-[9px] uppercase font-bold tracking-widest text-slate-400 block mb-1">
             The MATHVERSE Learning Cycle
           </span>
-          <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">
+          {/* Mobile compact summary */}
+          <div className="sm:hidden flex items-center justify-center gap-1.5 text-xs font-bold text-slate-800 dark:text-slate-200">
+            <span className="text-blue-600 dark:text-blue-400">Understand</span>
+            <span className="text-slate-400">→</span>
+            <span className="text-cyan-600 dark:text-cyan-400">Explore</span>
+            <span className="text-slate-400">→</span>
+            <span className="text-amber-600 dark:text-amber-400">Derive</span>
+            <span className="text-slate-400">→</span>
+            <span className="text-indigo-600 dark:text-indigo-400">Master</span>
+          </div>
+          {/* Tablet/Desktop full flow */}
+          <div className="hidden sm:flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">
             <span className="text-blue-600 dark:text-blue-400">Understand</span>
             <span className="text-slate-300">→</span>
             <span className="text-cyan-600 dark:text-cyan-400">Explore</span>
@@ -70,37 +81,37 @@ export const HomeView: React.FC<HomeViewProps> = ({
           </div>
         </div>
 
-        <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
+        <p className="hidden sm:block text-sm text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
           Manipulate variables, observe dynamic geometric proofs, discover formula origins, and master board exam techniques with guided discovery.
         </p>
 
         {/* Quick CTA Buttons */}
-        <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+        <div className="grid grid-cols-2 max-w-xs sm:max-w-md mx-auto gap-2 sm:gap-3 pt-0.5">
           <button
             onClick={() => onNavigateTab('labs')}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 text-white font-bold text-xs sm:text-sm hover:bg-indigo-700 shadow-md shadow-indigo-500/20 active:scale-95 transition"
+            className="flex items-center justify-center gap-1.5 px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-indigo-600 text-white font-bold text-xs sm:text-sm hover:bg-indigo-700 shadow-sm active:scale-95 transition whitespace-nowrap"
           >
-            <FlaskConical className="w-4 h-4" />
-            <span>Open Interactive Labs</span>
+            <FlaskConical className="w-4 h-4 shrink-0" />
+            <span>Interactive Labs</span>
           </button>
           <button
             onClick={() => onNavigateTab('chapters')}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 font-semibold text-xs sm:text-sm hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-95 transition"
+            className="flex items-center justify-center gap-1.5 px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 font-semibold text-xs sm:text-sm hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-95 transition whitespace-nowrap"
           >
-            <BookOpen className="w-4 h-4" />
-            <span>Browse 26 Chapters</span>
+            <BookOpen className="w-4 h-4 shrink-0" />
+            <span>26 Chapters</span>
           </button>
         </div>
       </section>
 
       {/* Featured Live Demonstration */}
-      <section className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
+      <section className="space-y-3 sm:space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-1.5 sm:gap-2">
           <div>
-            <span className="text-xs uppercase font-bold tracking-wider text-indigo-600 dark:text-indigo-400">
+            <span className="text-[10px] sm:text-xs uppercase font-bold tracking-wider text-indigo-600 dark:text-indigo-400">
               Live Feature Spotlight
             </span>
-            <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+            <h2 className="text-lg sm:text-2xl font-black text-slate-900 dark:text-white">
               The Interactive Mathematics Lab
             </h2>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">

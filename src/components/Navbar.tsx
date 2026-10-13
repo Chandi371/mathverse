@@ -73,11 +73,11 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           </div>
 
-          {/* Desktop Grade Selector (Hidden on Mobile) */}
-          <div className="hidden md:flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl text-xs font-semibold">
+          {/* Desktop Grade Selector (Hidden on Mobile & Tablet) */}
+          <div className="hidden lg:flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl text-xs font-semibold shrink-0">
             <button
               onClick={() => setSelectedClass(null)}
-              className={`px-3 py-1 rounded-lg transition ${
+              className={`px-3 py-1 rounded-lg transition whitespace-nowrap ${
                 selectedClass === null
                   ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
@@ -87,7 +87,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
             <button
               onClick={() => setSelectedClass(9)}
-              className={`px-3 py-1 rounded-lg transition ${
+              className={`px-3 py-1 rounded-lg transition whitespace-nowrap ${
                 selectedClass === 9
                   ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
@@ -97,7 +97,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
             <button
               onClick={() => setSelectedClass(10)}
-              className={`px-3 py-1 rounded-lg transition ${
+              className={`px-3 py-1 rounded-lg transition whitespace-nowrap ${
                 selectedClass === 10
                   ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
@@ -192,11 +192,11 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
 
         {/* Mobile Dedicated Second Row: Grade Segmented Bar */}
-        <div className="md:hidden pb-2.5 pt-0.5">
+        <div className="lg:hidden pb-2.5 pt-0.5">
           <div className="flex items-center bg-slate-100 dark:bg-slate-800/90 p-1 rounded-xl text-xs font-semibold">
             <button
               onClick={() => setSelectedClass(null)}
-              className={`flex-1 py-1.5 text-center rounded-lg transition min-h-[34px] flex items-center justify-center ${
+              className={`flex-1 py-1.5 px-2 text-center whitespace-nowrap rounded-lg transition min-h-[34px] flex items-center justify-center ${
                 selectedClass === null
                   ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs font-bold'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
@@ -206,7 +206,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
             <button
               onClick={() => setSelectedClass(9)}
-              className={`flex-1 py-1.5 text-center rounded-lg transition min-h-[34px] flex items-center justify-center ${
+              className={`flex-1 py-1.5 px-2 text-center whitespace-nowrap rounded-lg transition min-h-[34px] flex items-center justify-center ${
                 selectedClass === 9
                   ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs font-bold'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
@@ -216,7 +216,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
             <button
               onClick={() => setSelectedClass(10)}
-              className={`flex-1 py-1.5 text-center rounded-lg transition min-h-[34px] flex items-center justify-center ${
+              className={`flex-1 py-1.5 px-2 text-center whitespace-nowrap rounded-lg transition min-h-[34px] flex items-center justify-center ${
                 selectedClass === 10
                   ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs font-bold'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'

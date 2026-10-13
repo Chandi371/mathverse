@@ -46,9 +46,14 @@ const server = http.createServer((req, res) => {
       res.end('500 Internal Server Error');
       return;
     }
+    const isHtml = ext === '.html' || ext === '';
     res.writeHead(200, {
       'Content-Type': contentType,
-      'Cache-Control': ext === '.html' ? 'no-cache' : 'public, max-age=31536000, immutable',
+      'Cache-Control': isHtml
+        ? 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
+        : 'public, max-age=31536000, immutable',
+      'Pragma': isHtml ? 'no-cache' : undefined,
+      'Expires': isHtml ? '0' : undefined,
     });
     res.end(content);
   });
