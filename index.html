@@ -3,11 +3,19 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>mathverse</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#4f46e5" />
+    <meta name="description" content="MATHVERSE - An Interactive, Mobile-First Mathematics Learning Platform for AP State Board (SSC) Classes 9 & 10. Understand, explore, derive, and master." />
+    <title>MATHVERSE — Interactive Math Learning | AP Board Classes 9 &amp; 10</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- KaTeX CSS for formula typesetting -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
   </head>
-  <body>
-    <div id="root"></div>
+  <body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 antialiased min-h-dvh flex flex-col font-sans selection:bg-indigo-500 selection:text-white">
+    <div id="root" class="min-h-dvh flex flex-col"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
