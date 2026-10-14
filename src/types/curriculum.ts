@@ -31,9 +31,14 @@ export interface FormulaItem {
 
 export type QuestionDifficulty = 'Foundation' | 'Standard' | 'Advanced' | 'Challenge';
 
+export type QuestionFormat = 'mcq' | 'numerical' | 'missing-step' | 'spot-error' | 'proof-reasoning';
+export type GenerationMethod = 'deterministic' | 'authored' | 'parameterized-template';
+export type ValidationMethod = 'exact-match' | 'algebraic-identity' | 'numerical-tolerance' | 'geometric-congruence' | 'backward-substitution';
+
 export interface PracticeQuestion {
   id: string;
-  type: 'mcq' | 'numerical' | 'missing-step' | 'spot-error';
+  familyId?: string;
+  type: QuestionFormat;
   prompt: string;
   latexPrompt?: string;
   options?: string[]; // for mcq or missing-step
@@ -45,6 +50,11 @@ export interface PracticeQuestion {
   chapterId?: string;
   classGrade?: ClassGrade;
   semester?: Semester;
+  topic?: string;
+  subtopic?: string;
+  skill?: string;
+  generationMethod?: GenerationMethod;
+  validationMethod?: ValidationMethod;
   methodRationale?: string;
   verificationCheck?: string;
 }

@@ -2,9 +2,7 @@ import React, { useState, useMemo } from 'react';
 import confetti from 'canvas-confetti';
 import { MathView } from './MathView';
 import { chaptersData } from '../data/curriculumData';
-import {
-  generateQuestionByTopic,
-} from '../data/questionGenerators';
+import { buildBalancedPracticeSet } from '../data/questionSelector';
 import {
   CheckCircle2,
   XCircle,
@@ -18,6 +16,8 @@ import {
   Layers,
   GraduationCap,
   RefreshCw,
+  PieChart,
+  BookOpen,
 } from 'lucide-react';
 import type { PracticeQuestion, QuestionDifficulty, ClassGrade, Semester } from '../types/curriculum';
 import type { UserProgress } from '../types/progress';
@@ -33,7 +33,10 @@ export const PracticeStudio: React.FC<PracticeStudioProps> = ({ progress, onReco
   const [selectedSemester, setSelectedSemester] = useState<'all' | Semester>('all');
   const [selectedChapterId, setSelectedChapterId] = useState<string>('all');
   const [selectedDifficulty, setSelectedDifficulty] = useState<'all' | QuestionDifficulty>('all');
+  const [questionCount, setQuestionCount] = useState<number>(15);
+  const [seed, setSeed] = useState<number>(() => Date.now());
   const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false);
+  const [showCoverageStats, setShowCoverageStats] = useState<boolean>(false);
 
   // Active question state
   const [currentIndex, setCurrentIndex] = useState<number>(0);
@@ -43,26 +46,6 @@ export const PracticeStudio: React.FC<PracticeStudioProps> = ({ progress, onReco
   const [submitted, setSubmitted] = useState<boolean>(false);
   const [isCorrect, setIsCorrect] = useState<boolean>(false);
 
-  // Dynamic Generator Pool (Seed bank for live infinite practice)
-  const [generatedPool, setGeneratedPool] = useState<PracticeQuestion[]>(() => {
-    const pool: PracticeQuestion[] = [];
-    const topics: ('ap' | 'quad' | 'coord' | 'trig' | 'stat' | 'prob')[] = [
-      'ap',
-      'quad',
-      'coord',
-      'trig',
-      'stat',
-      'prob',
-    ];
-    const diffs: QuestionDifficulty[] = ['Foundation', 'Standard', 'Advanced', 'Challenge'];
-    for (const d of diffs) {
-      for (const t of topics) {
-        pool.push(generateQuestionByTopic(t, d));
-      }
-    }
-    return pool;
-  });
-
   // Base authored questions from curriculum
   const authoredQuestions: PracticeQuestion[] = useMemo(() => {
     return chaptersData.flatMap((ch) =>
@@ -71,34 +54,30 @@ export const PracticeStudio: React.FC<PracticeStudioProps> = ({ progress, onReco
         chapterId: ch.id,
         classGrade: ch.classGrade,
         semester: ch.semester,
+        generationMethod: 'authored' as const,
+        validationMethod: 'exact-match' as const,
       }))
     );
   }, []);
 
-  // Filtered Question Set
-  const filteredQuestions = useMemo(() => {
-    const combined = [...generatedPool, ...authoredQuestions];
+  // Generate Balanced Practice Set using Central Question Selector
+  const practiceSession = useMemo(() => {
+    return buildBalancedPracticeSet(
+      {
+        classGrade: selectedClass,
+        semester: selectedSemester,
+        chapterId: selectedChapterId,
+        difficulty: selectedDifficulty,
+        questionCount,
+        seed,
+      },
+      authoredQuestions
+    );
+  }, [selectedClass, selectedSemester, selectedChapterId, selectedDifficulty, questionCount, seed, authoredQuestions]);
 
-    return combined.filter((q) => {
-      if (selectedClass !== 'all' && q.classGrade && q.classGrade !== selectedClass) {
-        return false;
-      }
-      if (selectedSemester !== 'all' && q.semester && q.semester !== selectedSemester) {
-        return false;
-      }
-      if (selectedChapterId !== 'all' && q.chapterId && q.chapterId !== selectedChapterId) {
-        return false;
-      }
-      if (selectedDifficulty !== 'all' && q.difficulty !== selectedDifficulty) {
-        return false;
-      }
-      return true;
-    });
-  }, [generatedPool, authoredQuestions, selectedClass, selectedSemester, selectedChapterId, selectedDifficulty]);
-
-  // Current Question
-  const safeIndex = currentIndex < filteredQuestions.length ? currentIndex : 0;
-  const currentQ: PracticeQuestion | undefined = filteredQuestions[safeIndex];
+  const questions = practiceSession.questions;
+  const safeIndex = currentIndex < questions.length ? currentIndex : 0;
+  const currentQ: PracticeQuestion | undefined = questions[safeIndex];
   const history = currentQ ? progress.questionHistory[currentQ.id] : undefined;
 
   // Available chapters for current class & semester filters
@@ -109,6 +88,12 @@ export const PracticeStudio: React.FC<PracticeStudioProps> = ({ progress, onReco
       return true;
     });
   }, [selectedClass, selectedSemester]);
+
+  // Current chapter meta
+  const currentChapterMeta = useMemo(() => {
+    if (!currentQ?.chapterId) return undefined;
+    return chaptersData.find((ch) => ch.id === currentQ.chapterId);
+  }, [currentQ]);
 
   // Handlers
   const handleRevealNextHint = () => {
@@ -144,8 +129,8 @@ export const PracticeStudio: React.FC<PracticeStudioProps> = ({ progress, onReco
   };
 
   const handleNextQuestion = () => {
-    if (filteredQuestions.length > 0) {
-      setCurrentIndex((prev) => (prev + 1) % filteredQuestions.length);
+    if (questions.length > 0) {
+      setCurrentIndex((prev) => (prev + 1) % questions.length);
     }
     setSelectedOption('');
     setNumericInput('');
@@ -162,22 +147,7 @@ export const PracticeStudio: React.FC<PracticeStudioProps> = ({ progress, onReco
   };
 
   const handleGenerateFresh = () => {
-    const topics: ('ap' | 'quad' | 'coord' | 'trig' | 'stat' | 'prob')[] = [
-      'ap',
-      'quad',
-      'coord',
-      'trig',
-      'stat',
-      'prob',
-    ];
-    const diffs: QuestionDifficulty[] = ['Foundation', 'Standard', 'Advanced', 'Challenge'];
-    const newItems: PracticeQuestion[] = [];
-    for (const d of diffs) {
-      for (const t of topics) {
-        newItems.push(generateQuestionByTopic(t, d));
-      }
-    }
-    setGeneratedPool(newItems);
+    setSeed(Date.now() + Math.floor(Math.random() * 10000));
     setCurrentIndex(0);
     setSelectedOption('');
     setNumericInput('');
@@ -205,13 +175,13 @@ export const PracticeStudio: React.FC<PracticeStudioProps> = ({ progress, onReco
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <span className="text-xs uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950/70 text-indigo-800 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
-            Active Problem Solving Engine
+            Balanced Multi-Chapter Question Engine
           </span>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white mt-1">
             Interactive Practice Studio
           </h1>
           <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-0.5">
-            Select your syllabus and cognitive level to practice rigorous board examination problems.
+            Syllabus-wide question registry ensuring balanced topic distribution across all 26 AP SSC chapters.
           </p>
         </div>
 
@@ -228,7 +198,7 @@ export const PracticeStudio: React.FC<PracticeStudioProps> = ({ progress, onReco
         </div>
       </div>
 
-      {/* FILTER DRAWER / CONFIGURATION PANEL */}
+      {/* FILTER & SYLLABUS BALANCER CONFIGURATION PANEL */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-3.5 sm:p-5 shadow-xs space-y-3">
         <div className="flex items-center justify-between">
           <button
@@ -236,24 +206,35 @@ export const PracticeStudio: React.FC<PracticeStudioProps> = ({ progress, onReco
             className="flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition"
           >
             <SlidersHorizontal className="w-4 h-4 text-indigo-500" />
-            <span>Curriculum &amp; Difficulty Filters</span>
+            <span>Syllabus &amp; Balanced Distribution Filters</span>
             <ChevronDown
               className={`w-4 h-4 transition-transform duration-200 ${isFilterOpen ? 'rotate-180' : ''}`}
             />
           </button>
 
-          <button
-            onClick={handleGenerateFresh}
-            className="flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 rounded-lg border border-indigo-200 dark:border-indigo-800 transition"
-            title="Generate a brand new set of mathematical variations"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-            <span>Generate New Set</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowCoverageStats(!showCoverageStats)}
+              className="flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 rounded-lg transition"
+              title="View balanced chapter distribution"
+            >
+              <PieChart className="w-3.5 h-3.5 text-indigo-500" />
+              <span className="hidden sm:inline">Coverage Report</span>
+            </button>
+
+            <button
+              onClick={handleGenerateFresh}
+              className="flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 rounded-lg border border-indigo-200 dark:border-indigo-800 transition"
+              title="Generate a brand new balanced set"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              <span>Shuffle Balanced Set</span>
+            </button>
+          </div>
         </div>
 
         {/* Compact Filters Grid */}
-        <div className={`grid grid-cols-1 sm:grid-cols-4 gap-2.5 pt-2 border-t border-slate-100 dark:border-slate-800 ${isFilterOpen ? 'block' : 'hidden sm:grid'}`}>
+        <div className={`grid grid-cols-1 sm:grid-cols-5 gap-2.5 pt-2 border-t border-slate-100 dark:border-slate-800 ${isFilterOpen ? 'block' : 'hidden sm:grid'}`}>
           {/* Class Select */}
           <div className="space-y-1">
             <label className="text-[10px] uppercase font-bold text-slate-400 tracking-wider flex items-center gap-1">
@@ -311,7 +292,7 @@ export const PracticeStudio: React.FC<PracticeStudioProps> = ({ progress, onReco
               }}
               className="w-full text-xs font-semibold p-2 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 truncate"
             >
-              <option value="all">All Chapters ({availableChapters.length})</option>
+              <option value="all">Balanced Syllabus ({availableChapters.length} Chapters)</option>
               {availableChapters.map((ch) => (
                 <option key={ch.id} value={ch.id}>
                   Ch {ch.chapterNumber}: {ch.title}
@@ -340,7 +321,55 @@ export const PracticeStudio: React.FC<PracticeStudioProps> = ({ progress, onReco
               <option value="Challenge">Level 4 — Challenge</option>
             </select>
           </div>
+
+          {/* Question Set Size */}
+          <div className="space-y-1">
+            <label className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+              Batch Size
+            </label>
+            <select
+              value={questionCount}
+              onChange={(e) => {
+                setQuestionCount(Number(e.target.value));
+                setCurrentIndex(0);
+              }}
+              className="w-full text-xs font-semibold p-2 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            >
+              <option value={10}>10 Questions</option>
+              <option value={15}>15 Questions (Standard)</option>
+              <option value={20}>20 Questions</option>
+              <option value={26}>26 Questions (1 per Chapter)</option>
+            </select>
+          </div>
         </div>
+
+        {/* Coverage Statistics Drawer */}
+        {showCoverageStats && (
+          <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2 text-xs">
+            <div className="flex items-center justify-between font-bold text-slate-800 dark:text-slate-200">
+              <span className="flex items-center gap-1.5">
+                <PieChart className="w-3.5 h-3.5 text-indigo-500" />
+                Active Set Chapter Balance:
+              </span>
+              <span className="text-[11px] text-slate-400">
+                {Object.keys(practiceSession.chapterDistribution).length} unique chapters represented
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              {Object.entries(practiceSession.chapterDistribution).map(([chId, count]) => {
+                const meta = chaptersData.find((c) => c.id === chId);
+                return (
+                  <span
+                    key={chId}
+                    className="px-2 py-0.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-750 text-[11px] text-slate-700 dark:text-slate-300"
+                  >
+                    <strong>{meta ? `Ch ${meta.chapterNumber} (${meta.title})` : chId}:</strong> {count}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Active Filter Summary Badges */}
         <div className="flex flex-wrap items-center gap-2 pt-1 text-[11px] text-slate-500 dark:text-slate-400 font-medium">
@@ -355,7 +384,7 @@ export const PracticeStudio: React.FC<PracticeStudioProps> = ({ progress, onReco
             {selectedDifficulty === 'all' ? 'All Levels (1-4)' : selectedDifficulty}
           </span>
           <span className="ml-auto text-indigo-600 dark:text-indigo-400 font-bold">
-            {filteredQuestions.length} Questions Available
+            {questions.length} Balanced Questions
           </span>
         </div>
       </div>
@@ -367,7 +396,7 @@ export const PracticeStudio: React.FC<PracticeStudioProps> = ({ progress, onReco
           <div className="flex items-center justify-between gap-2 pb-3.5 border-b border-slate-100 dark:border-slate-800 text-xs">
             <div className="flex flex-wrap items-center gap-2">
               <span className="font-mono font-bold text-slate-400">
-                Problem {safeIndex + 1} of {filteredQuestions.length}
+                Problem {safeIndex + 1} of {questions.length}
               </span>
               <span
                 className={`px-2.5 py-0.5 rounded-full font-bold border text-[11px] ${getDifficultyBadge(
@@ -376,6 +405,14 @@ export const PracticeStudio: React.FC<PracticeStudioProps> = ({ progress, onReco
               >
                 {currentQ.difficulty}
               </span>
+              {currentChapterMeta && (
+                <span className="flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-medium border border-indigo-200 dark:border-indigo-800">
+                  <BookOpen className="w-3 h-3 text-indigo-500" />
+                  <span>
+                    Class {currentChapterMeta.classGrade} • Ch {currentChapterMeta.chapterNumber}: {currentChapterMeta.title}
+                  </span>
+                </span>
+              )}
               {history?.answered && (
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 font-medium border border-emerald-200 dark:border-emerald-800">
                   {history.isCorrect ? 'Solved ✓' : 'Attempted'}
