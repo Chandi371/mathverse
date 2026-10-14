@@ -10,6 +10,15 @@ export interface FormulaItem {
   chapterId: string;
   classGrade: ClassGrade;
   category: 'Algebra' | 'Geometry' | 'Coordinate Geometry' | 'Mensuration' | 'Trigonometry' | 'Statistics & Probability' | 'Number Systems';
+  conditions?: string;
+  whenToUse?: string;
+  workedExample?: {
+    problem: string;
+    latexProblem?: string;
+    solution: string;
+    latexSolution?: string;
+  };
+  mnemonic?: string;
   labId?: string;
   derivationSummary?: string;
   derivationSteps?: {
@@ -19,6 +28,8 @@ export interface FormulaItem {
     reason: string;
   }[];
 }
+
+export type QuestionDifficulty = 'Foundation' | 'Standard' | 'Advanced' | 'Challenge';
 
 export interface PracticeQuestion {
   id: string;
@@ -30,7 +41,12 @@ export interface PracticeQuestion {
   tolerance?: number; // for numerical
   hints: string[];
   explanation: string;
-  difficulty: 'Foundation' | 'Standard' | 'Challenge';
+  difficulty: QuestionDifficulty;
+  chapterId?: string;
+  classGrade?: ClassGrade;
+  semester?: Semester;
+  methodRationale?: string;
+  verificationCheck?: string;
 }
 
 export interface WorkedExample {

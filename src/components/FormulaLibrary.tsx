@@ -209,6 +209,55 @@ export const FormulaLibrary: React.FC<FormulaLibraryProps> = ({
                   </div>
                 )}
 
+                {/* Conditions / Restrictions */}
+                {formula.conditions && (
+                  <div className="mb-2 text-[11px] px-2.5 py-1.5 rounded-lg bg-amber-50/70 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-900/60 text-amber-900 dark:text-amber-300">
+                    <span className="font-bold">Conditions / Domain: </span>
+                    <span>{formula.conditions}</span>
+                  </div>
+                )}
+
+                {/* When to Use */}
+                {formula.whenToUse && (
+                  <div className="mb-2 text-[11px] px-2.5 py-1.5 rounded-lg bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-900/60 text-emerald-900 dark:text-emerald-300">
+                    <span className="font-bold">When to Apply: </span>
+                    <span>{formula.whenToUse}</span>
+                  </div>
+                )}
+
+                {/* Worked Example */}
+                {formula.workedExample && (
+                  <div className="mb-3 text-[11px] p-2.5 rounded-lg bg-slate-100/90 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 space-y-1">
+                    <span className="font-bold text-slate-800 dark:text-slate-200 block uppercase tracking-wider text-[10px]">
+                      Worked Example:
+                    </span>
+                    <p className="text-slate-700 dark:text-slate-300">
+                      <strong>Problem: </strong>{formula.workedExample.problem}
+                    </p>
+                    {formula.workedExample.latexProblem && (
+                      <div className="my-1 py-1 text-center bg-white dark:bg-slate-900 rounded border border-slate-200 dark:border-slate-750">
+                        <MathView math={formula.workedExample.latexProblem} block />
+                      </div>
+                    )}
+                    <p className="text-slate-700 dark:text-slate-300 pt-1 border-t border-slate-200 dark:border-slate-700">
+                      <strong>Solution: </strong>{formula.workedExample.solution}
+                    </p>
+                    {formula.workedExample.latexSolution && (
+                      <div className="my-1 py-1 text-center bg-white dark:bg-slate-900 rounded border border-slate-200 dark:border-slate-750">
+                        <MathView math={formula.workedExample.latexSolution} block />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Mnemonic / Memory Tip */}
+                {formula.mnemonic && (
+                  <div className="mb-3 text-[11px] px-2.5 py-1.5 rounded-lg bg-purple-50/70 dark:bg-purple-950/40 border border-purple-200/80 dark:border-purple-900/60 text-purple-900 dark:text-purple-300">
+                    <span className="font-bold">Memory Aid: </span>
+                    <span>{formula.mnemonic}</span>
+                  </div>
+                )}
+
                 {/* Formula Origins Expandable Section */}
                 {(formula.derivationSummary || formula.derivationSteps) && (
                   <div className="mt-3 mb-2 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden bg-slate-50/60 dark:bg-slate-800/40">

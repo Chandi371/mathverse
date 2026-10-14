@@ -38,15 +38,17 @@ export const ChapterView: React.FC<ChapterViewProps> = ({
 
   const isCompleted = progress.completedChapterIds.includes(chapter.id);
 
-  const sections = [
+  const allSections = [
     { id: 'intro', label: '1. Introduction', icon: BookOpen },
-    { id: 'lab', label: '2. Interactive Lab', icon: FlaskConical },
+    { id: 'lab', label: '2. Interactive Lab', icon: FlaskConical, show: Boolean(chapter.labId) },
     { id: 'derivation', label: '3. Formula Origins', icon: Sigma },
     { id: 'memory', label: '4. Memory Lab', icon: Brain },
     { id: 'examples', label: '5. Worked Examples', icon: FileCheck },
     { id: 'practice', label: '6. Practice Studio', icon: CheckCircle2 },
     { id: 'revision', label: '7. Revision Recap', icon: Lightbulb },
   ] as const;
+
+  const sections = allSections.filter((sec) => ('show' in sec ? sec.show : true));
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 pb-24 space-y-6">
@@ -171,10 +173,10 @@ export const ChapterView: React.FC<ChapterViewProps> = ({
 
             <div className="flex justify-end pt-1">
               <button
-                onClick={() => setActiveSection('lab')}
+                onClick={() => setActiveSection(chapter.labId ? 'lab' : 'derivation')}
                 className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-5 py-3 sm:py-2.5 rounded-xl bg-indigo-600 text-white text-xs sm:text-sm font-semibold hover:bg-indigo-700 shadow-sm transition active:scale-[0.98]"
               >
-                <span>Proceed to Interactive Lab</span>
+                <span>{chapter.labId ? 'Proceed to Interactive Lab' : 'Explore Formula Origins'}</span>
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>
@@ -182,19 +184,9 @@ export const ChapterView: React.FC<ChapterViewProps> = ({
         )}
 
         {/* 2. INTERACTIVE LAB */}
-        {activeSection === 'lab' && (
+        {activeSection === 'lab' && chapter.labId && (
           <div className="space-y-6 animate-in fade-in duration-150">
-            {chapter.labId ? (
-              <InteractiveLabDispatcher labId={chapter.labId} />
-            ) : (
-              <div className="p-8 text-center text-slate-400 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
-                <FlaskConical className="w-10 h-10 text-indigo-400 mx-auto mb-2 opacity-60" />
-                <p className="font-semibold text-slate-700 dark:text-slate-300">
-                  Visual Model Configured for this Chapter
-                </p>
-                <p className="text-xs mt-1">Interactive simulations are continuously released across chapters.</p>
-              </div>
-            )}
+            <InteractiveLabDispatcher labId={chapter.labId} />
 
             <div className="flex justify-between items-center pt-2">
               <button
@@ -277,10 +269,10 @@ export const ChapterView: React.FC<ChapterViewProps> = ({
 
             <div className="flex justify-between items-center pt-2">
               <button
-                onClick={() => setActiveSection('lab')}
+                onClick={() => setActiveSection(chapter.labId ? 'lab' : 'intro')}
                 className="text-xs font-semibold text-slate-500 hover:underline"
               >
-                ← Back to Lab
+                ← Back to {chapter.labId ? 'Lab' : 'Intro'}
               </button>
               <button
                 onClick={() => setActiveSection('memory')}
