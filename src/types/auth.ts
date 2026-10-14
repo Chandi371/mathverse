@@ -21,9 +21,7 @@ export interface AuthResponse {
   progress?: any;
   error?: string;
   message?: string;
-  resetToken?: string;
   requiresVerification?: boolean;
-  verificationCode?: string;
   email?: string;
 }
 

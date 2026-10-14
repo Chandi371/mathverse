@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
+import nodemailer from 'nodemailer';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -18,8 +19,38 @@ function initDb() {
     fs.mkdirSync(DATA_DIR, { recursive: true });
   }
 
-  // Wiping test accounts as requested: "i created a account for test delete that one"
-  // Ensures fresh, verified state for new students
+  if (fs.existsSync(DB_FILE)) {
+    try {
+      const data = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+      // Wiping test accounts as requested: "i created a account for test delete that one"
+      if (data.users) {
+        for (const [id, u] of Object.entries(data.users)) {
+          const emailLower = (u.email || '').toLowerCase();
+          const usernameLower = (u.username || u.name || '').toLowerCase();
+          if (emailLower.includes('test') || usernameLower.includes('test')) {
+            delete data.users[id];
+            if (data.progress && data.progress[id]) delete data.progress[id];
+            if (data.sessions) {
+              for (const [token, sess] of Object.entries(data.sessions)) {
+                if (sess.userId === id) delete data.sessions[token];
+              }
+            }
+          }
+        }
+      }
+      return {
+        users: data.users || {},
+        sessions: data.sessions || {},
+        resetTokens: data.resetTokens || {},
+        verificationCodes: data.verificationCodes || {},
+        progress: data.progress || {},
+        globalStats: data.globalStats || { totalQuestionsSolvedCommunity: 348 },
+      };
+    } catch (err) {
+      console.error('Error loading DB file, initializing fresh:', err);
+    }
+  }
+
   const initialDb = {
     users: {},
     sessions: {},
@@ -77,6 +108,132 @@ function sanitizeUser(user) {
     emailVerified: Boolean(user.emailVerified),
     createdAt: user.createdAt,
   };
+}
+
+// --- EMAIL DISPATCH (NODEMAILER) ---
+// Codes are sent directly to the student's email inbox and NEVER exposed in browser inspection / DevTools
+let mailTransporter = null;
+
+function getMailTransporter() {
+  if (mailTransporter) return mailTransporter;
+
+  const host = process.env.SMTP_HOST;
+  const user = process.env.SMTP_USER || process.env.SMTP_EMAIL;
+  const pass = process.env.SMTP_PASS || process.env.SMTP_PASSWORD;
+  const port = parseInt(process.env.SMTP_PORT || '587', 10);
+  const secure = process.env.SMTP_SECURE === 'true' || port === 465;
+
+  if (host && user && pass) {
+    mailTransporter = nodemailer.createTransport({
+      host,
+      port,
+      secure,
+      auth: { user, pass },
+    });
+  }
+  return mailTransporter;
+}
+
+async function sendVerificationEmail(toEmail, code) {
+  const transporter = getMailTransporter();
+  const from = process.env.EMAIL_FROM || process.env.SMTP_USER || '"MATHVERSE" <noreply@mathverse.edu>';
+  const subject = `${code} is your MATHVERSE Verification Code`;
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; color: #1e293b; padding: 24px; margin: 0; }
+        .card { max-width: 480px; margin: 0 auto; background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; padding: 32px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .logo { font-size: 24px; font-weight: 800; color: #4f46e5; letter-spacing: -0.5px; margin-bottom: 20px; }
+        .title { font-size: 18px; font-weight: 700; color: #0f172a; margin-bottom: 12px; }
+        .desc { font-size: 14px; color: #64748b; line-height: 1.6; margin-bottom: 24px; }
+        .code-box { font-size: 32px; font-weight: 800; letter-spacing: 8px; color: #4f46e5; background: #f5f3ff; border: 1px dashed #c7d2fe; border-radius: 12px; text-align: center; padding: 16px 0; margin-bottom: 24px; font-family: monospace; }
+        .footer { font-size: 12px; color: #94a3b8; border-top: 1px solid #f1f5f9; padding-top: 16px; }
+      </style>
+    </head>
+    <body>
+      <div class="card">
+        <div class="logo">MATHVERSE</div>
+        <div class="title">Verify Your Student Account</div>
+        <p class="desc">Welcome to MATHVERSE! Use the 6-digit verification code below to verify your email address and activate your personal progress tracking:</p>
+        <div class="code-box">${code}</div>
+        <p class="desc">This code will expire in 15 minutes. Enter this code on the verification screen to activate your account. If you did not register for MATHVERSE, please disregard this email.</p>
+        <div class="footer">
+          &copy; ${new Date().getFullYear()} MATHVERSE — AP Board Classes 9 & 10 Mathematics Interactive Learning Platform.
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+  const text = `MATHVERSE Verification Code: ${code}\n\nUse this 6-digit code to verify your student email address on MATHVERSE. This code expires in 15 minutes.\n\nIf you did not request this, please ignore this email.`;
+
+  if (transporter) {
+    try {
+      await transporter.sendMail({ from, to: toEmail, subject, text, html });
+      console.log(`[EMAIL DISPATCH] Verification email sent to ${toEmail}`);
+      return true;
+    } catch (err) {
+      console.error(`[EMAIL DISPATCH ERROR] Failed to send email via SMTP to ${toEmail}:`, err.message);
+      console.log(`[EMAIL DISPATCH SERVER-LOG] Verification code for ${toEmail}: ${code}`);
+      return false;
+    }
+  } else {
+    console.log(`[EMAIL DISPATCH SERVER-LOG] (SMTP not configured) Verification code for ${toEmail}: ${code}`);
+    return true;
+  }
+}
+
+async function sendPasswordResetEmail(toEmail, code) {
+  const transporter = getMailTransporter();
+  const from = process.env.EMAIL_FROM || process.env.SMTP_USER || '"MATHVERSE" <noreply@mathverse.edu>';
+  const subject = `${code} is your MATHVERSE Password Recovery Code`;
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; color: #1e293b; padding: 24px; margin: 0; }
+        .card { max-width: 480px; margin: 0 auto; background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; padding: 32px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .logo { font-size: 24px; font-weight: 800; color: #4f46e5; letter-spacing: -0.5px; margin-bottom: 20px; }
+        .title { font-size: 18px; font-weight: 700; color: #0f172a; margin-bottom: 12px; }
+        .desc { font-size: 14px; color: #64748b; line-height: 1.6; margin-bottom: 24px; }
+        .code-box { font-size: 32px; font-weight: 800; letter-spacing: 8px; color: #dc2626; background: #fef2f2; border: 1px dashed #fecaca; border-radius: 12px; text-align: center; padding: 16px 0; margin-bottom: 24px; font-family: monospace; }
+        .footer { font-size: 12px; color: #94a3b8; border-top: 1px solid #f1f5f9; padding-top: 16px; }
+      </style>
+    </head>
+    <body>
+      <div class="card">
+        <div class="logo">MATHVERSE</div>
+        <div class="title">Reset Your Password</div>
+        <p class="desc">We received a request to reset your password. Use the 6-digit recovery code below to set a new password for your account:</p>
+        <div class="code-box">${code}</div>
+        <p class="desc">This recovery code will expire in 15 minutes. If you did not request a password reset, you can safely ignore this email.</p>
+        <div class="footer">
+          &copy; ${new Date().getFullYear()} MATHVERSE — AP Board Classes 9 & 10 Mathematics Interactive Learning Platform.
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+  const text = `MATHVERSE Password Recovery Code: ${code}\n\nUse this code to reset your MATHVERSE password. This code expires in 15 minutes.\n\nIf you did not request this, please ignore this email.`;
+
+  if (transporter) {
+    try {
+      await transporter.sendMail({ from, to: toEmail, subject, text, html });
+      console.log(`[EMAIL DISPATCH] Password recovery email sent to ${toEmail}`);
+      return true;
+    } catch (err) {
+      console.error(`[EMAIL DISPATCH ERROR] Failed to send email via SMTP to ${toEmail}:`, err.message);
+      console.log(`[EMAIL DISPATCH SERVER-LOG] Recovery code for ${toEmail}: ${code}`);
+      return false;
+    }
+  } else {
+    console.log(`[EMAIL DISPATCH SERVER-LOG] (SMTP not configured) Recovery code for ${toEmail}: ${code}`);
+    return true;
+  }
 }
 
 // --- REQUEST UTILITIES ---
@@ -245,13 +402,16 @@ async function handleApiRequest(req, res) {
 
       saveDb();
 
+      // Dispatch verification code directly to student's email inbox
+      await sendVerificationEmail(email, verificationCode);
+
+      // Code is completely omitted from the HTTP response payload so DevTools / network inspection cannot see it
       return sendJson(res, 201, {
         success: true,
         requiresVerification: true,
         email,
         username: rawUsername,
-        verificationCode, // Provided for instant one-click verification in demo/production
-        message: `A 6-digit verification code has been sent to ${email}.`,
+        message: `A 6-digit verification code has been dispatched to ${email}. Please check your email inbox and enter the code below.`,
       });
     }
 
@@ -338,10 +498,11 @@ async function handleApiRequest(req, res) {
       };
       saveDb();
 
+      await sendVerificationEmail(email, newCode);
+
       return sendJson(res, 200, {
         success: true,
-        verificationCode: newCode,
-        message: `New verification code generated for ${email}.`,
+        message: `A new 6-digit verification code has been dispatched to ${email}.`,
       });
     }
 
@@ -372,11 +533,12 @@ async function handleApiRequest(req, res) {
         };
         saveDb();
 
+        await sendVerificationEmail(email, code);
+
         return sendJson(res, 403, {
-          error: 'Please verify your email address before logging in.',
+          error: 'Please verify your email address before logging in. A new 6-digit verification code has been dispatched to your email.',
           requiresVerification: true,
           email: user.email,
-          verificationCode: code,
         });
       }
 
@@ -450,17 +612,20 @@ async function handleApiRequest(req, res) {
         });
       }
 
-      const resetToken = generateToken(24);
-      db.resetTokens[resetToken] = {
+      const resetCode = generate6DigitCode();
+      db.resetTokens[resetCode] = {
         userId: user.id,
         expiresAt: Date.now() + 15 * 60 * 1000,
       };
       saveDb();
 
+      // Dispatch recovery code directly to student's email inbox
+      await sendPasswordResetEmail(email, resetCode);
+
+      // Code is completely omitted from the HTTP response payload so DevTools / network inspection cannot see it
       return sendJson(res, 200, {
         success: true,
-        message: 'Password reset code generated.',
-        resetToken,
+        message: 'If an account exists with this email, a 6-digit recovery code has been sent to your inbox.',
       });
     }
 

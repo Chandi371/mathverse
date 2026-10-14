@@ -126,8 +126,8 @@ export async function logoutStudent(): Promise<void> {
 
 export async function requestPasswordReset(
   email: string
-): Promise<{ success: boolean; message: string; resetToken?: string }> {
-  return await apiFetch<{ success: boolean; message: string; resetToken?: string }>(
+): Promise<{ success: boolean; message: string }> {
+  return await apiFetch<{ success: boolean; message: string }>(
     '/api/auth/request-password-reset',
     {
       method: 'POST',

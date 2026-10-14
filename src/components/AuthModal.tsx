@@ -41,9 +41,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
   const [confirmPassword, setConfirmPassword] = useState('');
   const [classGrade, setClassGrade] = useState<9 | 10>(10);
 
-  // Email verification state
+  // Email verification state (Code is hidden from browser inspection and sent to student inbox)
   const [verificationCode, setVerificationCode] = useState('');
-  const [suggestedCode, setSuggestedCode] = useState<string | null>(null);
 
   // Password reset state
   const [resetToken, setResetToken] = useState('');
@@ -79,9 +78,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
     } catch (err: any) {
       if (err.data?.requiresVerification) {
         setInfoMessage(err.message || 'Please verify your email address to log in.');
-        if (err.data.verificationCode) {
-          setSuggestedCode(err.data.verificationCode);
-        }
         setMode('verify-email');
       } else {
         setError(err.message || 'Login failed. Please check your credentials.');
@@ -105,9 +101,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
       const res = await registerStudent(email, username, password, confirmPassword, classGrade);
       if (res.requiresVerification) {
         setInfoMessage(res.message || 'Verification code sent to your email.');
-        if (res.verificationCode) {
-          setSuggestedCode(res.verificationCode);
-        }
         setMode('verify-email');
       } else if (res.user && res.token) {
         setActiveStudentId(res.user.id);
@@ -133,7 +126,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
       onAuthSuccess(user, progress);
       onClose();
     } catch (err: any) {
-      setError(err.message || 'Verification failed. Please check the code.');
+      setError(err.message || 'Verification failed. Please check the code in your email.');
     } finally {
       setLoading(false);
     }
@@ -144,10 +137,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
     resetMessages();
     try {
       const res = await resendVerificationCode(email);
-      setInfoMessage(res.message || 'A new verification code has been sent.');
-      if (res.verificationCode) {
-        setSuggestedCode(res.verificationCode);
-      }
+      setInfoMessage(res.message || 'A new verification code has been dispatched to your email.');
     } catch (err: any) {
       setError(err.message || 'Failed to resend code.');
     } finally {
@@ -161,11 +151,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
     resetMessages();
     try {
       const res = await requestPasswordReset(email);
-      setInfoMessage(res.message);
-      if (res.resetToken) {
-        setResetToken(res.resetToken);
-        setMode('reset-code');
-      }
+      setInfoMessage(res.message || 'A recovery code has been sent to your email.');
+      setMode('reset-code');
     } catch (err: any) {
       setError(err.message || 'Failed to request reset.');
     } finally {
@@ -208,7 +195,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
         <div className="relative p-5 pb-4 bg-gradient-to-br from-indigo-500/10 via-cyan-500/10 to-transparent border-b border-slate-100 dark:border-slate-800/80">
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+            className="absolute top-4 right-4 p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
             aria-label="Close modal"
           >
             <X className="w-5 h-5" />
@@ -233,9 +220,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             {mode === 'login' && 'Access your personal streaks, bookmarks, and syllabus completion.'}
             {mode === 'register' && 'One unique username and verified email per student account.'}
-            {mode === 'verify-email' && `Enter the 6-digit verification code sent to ${email}.`}
+            {mode === 'verify-email' && `Check your inbox at ${email} for your 6-digit code.`}
             {mode === 'forgot' && 'Enter your registered email to receive an instant recovery code.'}
-            {mode === 'reset-code' && 'Enter your verification code and choose a secure new password.'}
+            {mode === 'reset-code' && 'Enter the verification code from your email and set a new password.'}
           </p>
 
           {/* Mode Switch Tabs */}
@@ -311,7 +298,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
                   <button
                     type="button"
                     onClick={() => handleSwitchMode('forgot')}
-                    className="text-[11px] text-indigo-600 dark:text-indigo-400 hover:underline"
+                    className="text-[11px] text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
                   >
                     Forgot password?
                   </button>
@@ -377,7 +364,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
                     className="w-full pl-9 pr-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
-                <p className="text-[10px] text-slate-400 mt-0.5">Only one account can be created per email.</p>
+                <p className="text-[10px] text-slate-400 mt-0.5">A verification code will be sent to this email address.</p>
               </div>
 
               <div>
@@ -474,43 +461,29 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
                 disabled={loading || (confirmPassword.length > 0 && password !== confirmPassword)}
                 className="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-indigo-600/20 flex items-center justify-center gap-2 transition disabled:opacity-50 cursor-pointer"
               >
-                {loading ? 'Sending Verification Code...' : 'Create Account & Verify Email'}
+                {loading ? 'Sending Verification Code...' : 'Create Account & Send Code'}
                 {!loading && <ArrowRight className="w-4 h-4" />}
               </button>
             </form>
           )}
 
-          {/* 3. EMAIL VERIFICATION STEP */}
+          {/* 3. EMAIL VERIFICATION STEP (Code is retrieved from inbox, completely hidden from browser inspection) */}
           {mode === 'verify-email' && (
             <form onSubmit={handleVerifyEmail} className="space-y-4">
-              <div className="p-3.5 rounded-2xl bg-indigo-50/80 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/60 text-xs">
-                <div className="flex items-center gap-2 text-indigo-700 dark:text-indigo-300 font-bold mb-1">
+              <div className="p-4 rounded-2xl bg-indigo-50/80 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/60 text-xs">
+                <div className="flex items-center gap-2 text-indigo-700 dark:text-indigo-300 font-bold mb-1.5">
                   <Mail className="w-4 h-4" />
-                  <span>Verification Code Sent</span>
+                  <span>Check Your Email Inbox</span>
                 </div>
-                <p className="text-slate-600 dark:text-slate-300">
-                  We sent a 6-digit confirmation code to <strong className="text-indigo-600 dark:text-indigo-400">{email}</strong>.
+                <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
+                  We sent a 6-digit verification code to <strong className="text-indigo-600 dark:text-indigo-400">{email}</strong>.
+                  Please open your email inbox (or spam folder), copy the code, and paste it below.
                 </p>
-
-                {suggestedCode && (
-                  <div className="mt-2.5 p-2 rounded-xl bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-800 flex items-center justify-between">
-                    <span className="text-[11px] text-slate-500 font-mono">
-                      Your Code: <strong className="text-indigo-600 dark:text-indigo-400 text-sm">{suggestedCode}</strong>
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setVerificationCode(suggestedCode)}
-                      className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-200 cursor-pointer"
-                    >
-                      Fill Code
-                    </button>
-                  </div>
-                )}
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Enter 6-Digit Code
+                  Enter 6-Digit Verification Code
                 </label>
                 <input
                   type="text"
@@ -518,8 +491,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
                   maxLength={6}
                   value={verificationCode}
                   onChange={(e) => setVerificationCode(e.target.value.trim())}
-                  placeholder="e.g. 123456"
-                  className="w-full text-center tracking-widest font-mono text-lg py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                  placeholder="Paste 6-digit code from email"
+                  className="w-full text-center tracking-widest font-mono text-xl py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
 
@@ -577,7 +550,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
                 disabled={loading}
                 className="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-indigo-600/20 flex items-center justify-center gap-2 transition disabled:opacity-50 cursor-pointer"
               >
-                {loading ? 'Generating Code...' : 'Get Recovery Code'}
+                {loading ? 'Sending Code...' : 'Send Recovery Code to Email'}
                 {!loading && <KeyRound className="w-4 h-4" />}
               </button>
 
@@ -596,16 +569,22 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
           {/* 5. SET NEW PASSWORD FORM (With Confirm New Password) */}
           {mode === 'reset-code' && (
             <form onSubmit={handleResetSubmit} className="space-y-3.5">
+              <div className="p-3.5 rounded-2xl bg-indigo-50/80 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/60 text-xs">
+                <p className="text-slate-600 dark:text-slate-300">
+                  Please enter the recovery code sent to <strong className="text-indigo-600 dark:text-indigo-400">{email}</strong>.
+                </p>
+              </div>
+
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Verification Code
+                  Recovery Code from Email
                 </label>
                 <input
                   type="text"
                   required
                   value={resetToken}
-                  onChange={(e) => setResetToken(e.target.value)}
-                  placeholder="Paste your reset code"
+                  onChange={(e) => setResetToken(e.target.value.trim())}
+                  placeholder="Paste recovery code from email"
                   className="w-full px-3 py-2 font-mono text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
@@ -689,7 +668,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
 
           {/* Privacy Note */}
           <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-400 text-center">
-            One unique account per email and username. Encrypted using salted PBKDF2 hashes.
+            Verification codes are dispatched strictly to your email and hidden from browser inspection.
           </div>
         </div>
       </div>
