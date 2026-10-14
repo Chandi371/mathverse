@@ -110,8 +110,9 @@ function sanitizeUser(user) {
   };
 }
 
-// --- EMAIL DISPATCH (NODEMAILER) ---
-// Codes are sent directly to the student's email inbox and NEVER exposed in browser inspection / DevTools
+// --- EMAIL DISPATCH (RESEND HTTPS API + BREVO HTTPS API + NODEMAILER SMTP) ---
+// Note: Render free tier blocks outbound SMTP ports (25, 465, 587).
+// Resend and Brevo use HTTPS (port 443) which works seamlessly on Render!
 let mailTransporter = null;
 
 function getMailTransporter() {
@@ -134,8 +135,82 @@ function getMailTransporter() {
   return mailTransporter;
 }
 
+function hasConfiguredEmailProvider() {
+  return Boolean(
+    process.env.RESEND_API_KEY ||
+    process.env.BREVO_API_KEY ||
+    (process.env.SMTP_HOST && (process.env.SMTP_USER || process.env.SMTP_EMAIL) && (process.env.SMTP_PASS || process.env.SMTP_PASSWORD))
+  );
+}
+
+// 1. Resend HTTPS API (Sends via port 443 without SMTP blocking on Render)
+async function sendViaResend(toEmail, subject, text, html) {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return false;
+
+  const from = process.env.EMAIL_FROM || 'MATHVERSE <onboarding@resend.dev>';
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from,
+        to: [toEmail],
+        subject,
+        html,
+        text,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      console.error('[RESEND API ERROR]', data);
+      return false;
+    }
+    console.log(`[RESEND API SUCCESS] Email delivered to ${toEmail} from MATHVERSE:`, data.id);
+    return true;
+  } catch (err) {
+    console.error('[RESEND FETCH ERROR]', err.message);
+    return false;
+  }
+}
+
+// 2. Brevo HTTPS API (Sends via port 443)
+async function sendViaBrevo(toEmail, subject, text, html) {
+  const apiKey = process.env.BREVO_API_KEY;
+  if (!apiKey) return false;
+
+  try {
+    const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'api-key': apiKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        sender: { name: 'MATHVERSE', email: process.env.BREVO_SENDER_EMAIL || 'noreply@mathverse.edu' },
+        to: [{ email: toEmail }],
+        subject,
+        htmlContent: html,
+        textContent: text,
+      }),
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      console.error('[BREVO API ERROR]', err);
+      return false;
+    }
+    console.log(`[BREVO API SUCCESS] Email delivered to ${toEmail} from MATHVERSE`);
+    return true;
+  } catch (err) {
+    console.error('[BREVO FETCH ERROR]', err.message);
+    return false;
+  }
+}
+
 async function sendVerificationEmail(toEmail, code) {
-  const transporter = getMailTransporter();
   const from = process.env.EMAIL_FROM || process.env.SMTP_USER || '"MATHVERSE" <noreply@mathverse.edu>';
   const subject = `${code} is your MATHVERSE Verification Code`;
   const html = `
@@ -167,26 +242,34 @@ async function sendVerificationEmail(toEmail, code) {
     </body>
     </html>
   `;
-  const text = `MATHVERSE Verification Code: ${code}\n\nUse this 6-digit code to verify your student email address on MATHVERSE. This code expires in 15 minutes.\n\nIf you did not request this, please ignore this email.`;
+  const text = `MATHVERSE Verification Code: ${code}\n\nUse this 6-digit code to verify your student email address on MATHVERSE. This code expires in 15 minutes.\n\nFrom: MATHVERSE\nIf you did not request this, please ignore this email.`;
 
+  if (process.env.RESEND_API_KEY) {
+    const ok = await sendViaResend(toEmail, subject, text, html);
+    if (ok) return true;
+  }
+
+  if (process.env.BREVO_API_KEY) {
+    const ok = await sendViaBrevo(toEmail, subject, text, html);
+    if (ok) return true;
+  }
+
+  const transporter = getMailTransporter();
   if (transporter) {
     try {
       await transporter.sendMail({ from, to: toEmail, subject, text, html });
-      console.log(`[EMAIL DISPATCH] Verification email sent to ${toEmail}`);
+      console.log(`[EMAIL DISPATCH] Verification email sent to ${toEmail} from MATHVERSE`);
       return true;
     } catch (err) {
       console.error(`[EMAIL DISPATCH ERROR] Failed to send email via SMTP to ${toEmail}:`, err.message);
-      console.log(`[EMAIL DISPATCH SERVER-LOG] Verification code for ${toEmail}: ${code}`);
-      return false;
     }
-  } else {
-    console.log(`[EMAIL DISPATCH SERVER-LOG] (SMTP not configured) Verification code for ${toEmail}: ${code}`);
-    return true;
   }
+
+  console.log(`[EMAIL DISPATCH SERVER-LOG] (Email service not configured) Verification code for ${toEmail}: ${code}`);
+  return false;
 }
 
 async function sendPasswordResetEmail(toEmail, code) {
-  const transporter = getMailTransporter();
   const from = process.env.EMAIL_FROM || process.env.SMTP_USER || '"MATHVERSE" <noreply@mathverse.edu>';
   const subject = `${code} is your MATHVERSE Password Recovery Code`;
   const html = `
@@ -218,22 +301,31 @@ async function sendPasswordResetEmail(toEmail, code) {
     </body>
     </html>
   `;
-  const text = `MATHVERSE Password Recovery Code: ${code}\n\nUse this code to reset your MATHVERSE password. This code expires in 15 minutes.\n\nIf you did not request this, please ignore this email.`;
+  const text = `MATHVERSE Password Recovery Code: ${code}\n\nUse this code to reset your MATHVERSE password. This code expires in 15 minutes.\n\nFrom: MATHVERSE\nIf you did not request this, please ignore this email.`;
 
+  if (process.env.RESEND_API_KEY) {
+    const ok = await sendViaResend(toEmail, subject, text, html);
+    if (ok) return true;
+  }
+
+  if (process.env.BREVO_API_KEY) {
+    const ok = await sendViaBrevo(toEmail, subject, text, html);
+    if (ok) return true;
+  }
+
+  const transporter = getMailTransporter();
   if (transporter) {
     try {
       await transporter.sendMail({ from, to: toEmail, subject, text, html });
-      console.log(`[EMAIL DISPATCH] Password recovery email sent to ${toEmail}`);
+      console.log(`[EMAIL DISPATCH] Recovery email sent to ${toEmail} from MATHVERSE`);
       return true;
     } catch (err) {
       console.error(`[EMAIL DISPATCH ERROR] Failed to send email via SMTP to ${toEmail}:`, err.message);
-      console.log(`[EMAIL DISPATCH SERVER-LOG] Recovery code for ${toEmail}: ${code}`);
-      return false;
     }
-  } else {
-    console.log(`[EMAIL DISPATCH SERVER-LOG] (SMTP not configured) Recovery code for ${toEmail}: ${code}`);
-    return true;
   }
+
+  console.log(`[EMAIL DISPATCH SERVER-LOG] (Email service not configured) Recovery code for ${toEmail}: ${code}`);
+  return false;
 }
 
 // --- REQUEST UTILITIES ---
@@ -404,14 +496,18 @@ async function handleApiRequest(req, res) {
 
       // Dispatch verification code directly to student's email inbox
       await sendVerificationEmail(email, verificationCode);
+      const isConfigured = hasConfiguredEmailProvider();
 
-      // Code is completely omitted from the HTTP response payload so DevTools / network inspection cannot see it
       return sendJson(res, 201, {
         success: true,
         requiresVerification: true,
         email,
         username: rawUsername,
-        message: `A 6-digit verification code has been dispatched to ${email}. Please check your email inbox and enter the code below.`,
+        emailServiceConfigured: isConfigured,
+        sandboxVerificationCode: isConfigured ? undefined : verificationCode,
+        message: isConfigured
+          ? `A 6-digit verification code has been dispatched to ${email} from MATHVERSE. Please check your inbox and enter the code below.`
+          : `A 6-digit verification code has been generated for ${email}. Email dispatch is running in server sandbox mode.`,
       });
     }
 
@@ -499,10 +595,15 @@ async function handleApiRequest(req, res) {
       saveDb();
 
       await sendVerificationEmail(email, newCode);
+      const isConfigured = hasConfiguredEmailProvider();
 
       return sendJson(res, 200, {
         success: true,
-        message: `A new 6-digit verification code has been dispatched to ${email}.`,
+        emailServiceConfigured: isConfigured,
+        sandboxVerificationCode: isConfigured ? undefined : newCode,
+        message: isConfigured
+          ? `A new 6-digit verification code has been dispatched to ${email} from MATHVERSE.`
+          : `A new 6-digit verification code was generated for ${email} in server sandbox mode.`,
       });
     }
 
@@ -534,11 +635,16 @@ async function handleApiRequest(req, res) {
         saveDb();
 
         await sendVerificationEmail(email, code);
+        const isEmailConfigured = hasConfiguredEmailProvider();
 
         return sendJson(res, 403, {
-          error: 'Please verify your email address before logging in. A new 6-digit verification code has been dispatched to your email.',
+          error: isEmailConfigured
+            ? 'Please verify your email address before logging in. A new 6-digit verification code has been dispatched to your email from MATHVERSE.'
+            : 'Please verify your email address before logging in. (Running in Server Sandbox Mode)',
           requiresVerification: true,
           email: user.email,
+          emailServiceConfigured: isEmailConfigured,
+          sandboxVerificationCode: isEmailConfigured ? undefined : code,
         });
       }
 
@@ -621,11 +727,15 @@ async function handleApiRequest(req, res) {
 
       // Dispatch recovery code directly to student's email inbox
       await sendPasswordResetEmail(email, resetCode);
+      const isConfigured = hasConfiguredEmailProvider();
 
-      // Code is completely omitted from the HTTP response payload so DevTools / network inspection cannot see it
       return sendJson(res, 200, {
         success: true,
-        message: 'If an account exists with this email, a 6-digit recovery code has been sent to your inbox.',
+        emailServiceConfigured: isConfigured,
+        sandboxResetCode: isConfigured ? undefined : resetCode,
+        message: isConfigured
+          ? 'If an account exists with this email, a 6-digit recovery code has been sent from MATHVERSE to your inbox.'
+          : 'If an account exists with this email, a 6-digit recovery code has been generated in server sandbox mode.',
       });
     }
 

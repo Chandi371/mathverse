@@ -23,6 +23,9 @@ export interface AuthResponse {
   message?: string;
   requiresVerification?: boolean;
   email?: string;
+  emailServiceConfigured?: boolean;
+  sandboxVerificationCode?: string;
+  sandboxResetCode?: string;
 }
 
 export interface GlobalCommunityStats {

@@ -48,6 +48,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
   const [resetToken, setResetToken] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [sandboxCode, setSandboxCode] = useState<string | null>(null);
+  const [sandboxResetCode, setSandboxResetCode] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -58,6 +60,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
   const resetMessages = () => {
     setError(null);
     setInfoMessage(null);
+    setSandboxCode(null);
+    setSandboxResetCode(null);
   };
 
   const handleSwitchMode = (newMode: AuthMode) => {
@@ -78,6 +82,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
     } catch (err: any) {
       if (err.data?.requiresVerification) {
         setInfoMessage(err.message || 'Please verify your email address to log in.');
+        if (err.data?.sandboxVerificationCode) {
+          setSandboxCode(err.data.sandboxVerificationCode);
+        }
         setMode('verify-email');
       } else {
         setError(err.message || 'Login failed. Please check your credentials.');
@@ -100,7 +107,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
     try {
       const res = await registerStudent(email, username, password, confirmPassword, classGrade);
       if (res.requiresVerification) {
-        setInfoMessage(res.message || 'Verification code sent to your email.');
+        setInfoMessage(res.message || 'Verification code sent.');
+        if (res.sandboxVerificationCode) {
+          setSandboxCode(res.sandboxVerificationCode);
+        }
         setMode('verify-email');
       } else if (res.user && res.token) {
         setActiveStudentId(res.user.id);
@@ -137,7 +147,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
     resetMessages();
     try {
       const res = await resendVerificationCode(email);
-      setInfoMessage(res.message || 'A new verification code has been dispatched to your email.');
+      setInfoMessage(res.message || 'A new verification code has been dispatched.');
+      if (res.sandboxVerificationCode) {
+        setSandboxCode(res.sandboxVerificationCode);
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to resend code.');
     } finally {
@@ -151,7 +164,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
     resetMessages();
     try {
       const res = await requestPasswordReset(email);
-      setInfoMessage(res.message || 'A recovery code has been sent to your email.');
+      setInfoMessage(res.message || 'A recovery code has been generated.');
+      if (res.sandboxResetCode) {
+        setSandboxResetCode(res.sandboxResetCode);
+      }
       setMode('reset-code');
     } catch (err: any) {
       setError(err.message || 'Failed to request reset.');
@@ -476,9 +492,30 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
                   <span>Check Your Email Inbox</span>
                 </div>
                 <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
-                  We sent a 6-digit verification code to <strong className="text-indigo-600 dark:text-indigo-400">{email}</strong>.
+                  We sent a 6-digit verification code to <strong className="text-indigo-600 dark:text-indigo-400">{email}</strong> from <strong className="text-indigo-600 dark:text-indigo-400">MATHVERSE</strong>.
                   Please open your email inbox (or spam folder), copy the code, and paste it below.
                 </p>
+
+                {sandboxCode && (
+                  <div className="mt-3 p-2.5 rounded-xl bg-amber-500/10 border border-amber-300 dark:border-amber-700 text-xs">
+                    <div className="flex items-center justify-between text-amber-800 dark:text-amber-200 font-semibold mb-1">
+                      <span>Server Verification Code:</span>
+                      <button
+                        type="button"
+                        onClick={() => setVerificationCode(sandboxCode)}
+                        className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-200 dark:bg-amber-900 text-amber-900 dark:text-amber-100 hover:bg-amber-300 cursor-pointer"
+                      >
+                        Auto-Fill
+                      </button>
+                    </div>
+                    <div className="font-mono text-center tracking-widest text-lg font-bold text-amber-900 dark:text-amber-200 py-1">
+                      {sandboxCode}
+                    </div>
+                    <p className="text-[10px] text-amber-700 dark:text-amber-400">
+                      Hosting email dispatch is in sandbox mode. You can copy the code above or click Auto-Fill to activate your account.
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div>
@@ -571,8 +608,26 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
             <form onSubmit={handleResetSubmit} className="space-y-3.5">
               <div className="p-3.5 rounded-2xl bg-indigo-50/80 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/60 text-xs">
                 <p className="text-slate-600 dark:text-slate-300">
-                  Please enter the recovery code sent to <strong className="text-indigo-600 dark:text-indigo-400">{email}</strong>.
+                  Please enter the recovery code sent from <strong className="text-indigo-600 dark:text-indigo-400">MATHVERSE</strong> to <strong className="text-indigo-600 dark:text-indigo-400">{email}</strong>.
                 </p>
+
+                {sandboxResetCode && (
+                  <div className="mt-2.5 p-2 rounded-xl bg-amber-500/10 border border-amber-300 dark:border-amber-700 text-xs">
+                    <div className="flex items-center justify-between text-amber-800 dark:text-amber-200 font-semibold mb-1">
+                      <span>Server Recovery Code:</span>
+                      <button
+                        type="button"
+                        onClick={() => setResetToken(sandboxResetCode)}
+                        className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-200 dark:bg-amber-900 text-amber-900 dark:text-amber-100 hover:bg-amber-300 cursor-pointer"
+                      >
+                        Auto-Fill
+                      </button>
+                    </div>
+                    <div className="font-mono text-center tracking-widest text-base font-bold text-amber-900 dark:text-amber-200 py-0.5">
+                      {sandboxResetCode}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div>
