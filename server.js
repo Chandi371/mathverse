@@ -4,6 +4,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import nodemailer from 'nodemailer';
+import pg from 'pg';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -13,7 +14,49 @@ const DIST_DIR = path.join(__dirname, 'dist');
 const DATA_DIR = path.join(__dirname, 'data');
 const DB_FILE = path.join(DATA_DIR, 'mathverse_db.json');
 
-// --- DATABASE & PERSISTENCE LAYER ---
+// --- DATABASE & PERSISTENCE LAYER (DUAL-MODE: SUPABASE / POSTGRES + LOCAL FALLBACK) ---
+let pgPool = null;
+const dbUrl = process.env.DATABASE_URL || process.env.SUPABASE_DB_URL;
+
+if (dbUrl) {
+  try {
+    pgPool = new pg.Pool({
+      connectionString: dbUrl,
+      ssl: dbUrl.includes('localhost') ? false : { rejectUnauthorized: false },
+    });
+    console.log('[DATABASE] Cloud PostgreSQL / Supabase connection pool configured.');
+  } catch (err) {
+    console.error('[DATABASE] Failed to initialize PostgreSQL pool:', err.message);
+  }
+}
+
+function purgeDeletedAccounts(data) {
+  if (data.users) {
+    for (const [id, u] of Object.entries(data.users)) {
+      const emailLower = (u.email || '').toLowerCase();
+      const usernameLower = (u.username || u.name || '').toLowerCase();
+      if (
+        emailLower.includes('test') ||
+        usernameLower.includes('test') ||
+        emailLower === 'hanishbg371@gmail.com' ||
+        usernameLower === 'chandi371' ||
+        usernameLower === 'hanish'
+      ) {
+        delete data.users[id];
+        if (data.progress && data.progress[id]) delete data.progress[id];
+        if (data.sessions) {
+          for (const [token, sess] of Object.entries(data.sessions || {})) {
+            if (sess.userId === id) delete data.sessions[token];
+          }
+        }
+      }
+    }
+  }
+  if (data.verificationCodes) {
+    delete data.verificationCodes['hanishbg371@gmail.com'];
+  }
+}
+
 function initDb() {
   if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -22,22 +65,7 @@ function initDb() {
   if (fs.existsSync(DB_FILE)) {
     try {
       const data = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
-      // Wiping test accounts as requested: "i created a account for test delete that one"
-      if (data.users) {
-        for (const [id, u] of Object.entries(data.users)) {
-          const emailLower = (u.email || '').toLowerCase();
-          const usernameLower = (u.username || u.name || '').toLowerCase();
-          if (emailLower.includes('test') || usernameLower.includes('test')) {
-            delete data.users[id];
-            if (data.progress && data.progress[id]) delete data.progress[id];
-            if (data.sessions) {
-              for (const [token, sess] of Object.entries(data.sessions)) {
-                if (sess.userId === id) delete data.sessions[token];
-              }
-            }
-          }
-        }
-      }
+      purgeDeletedAccounts(data);
       return {
         users: data.users || {},
         sessions: data.sessions || {},
@@ -47,7 +75,7 @@ function initDb() {
         globalStats: data.globalStats || { totalQuestionsSolvedCommunity: 348 },
       };
     } catch (err) {
-      console.error('Error loading DB file, initializing fresh:', err);
+      console.error('[DATABASE] Error reading local DB file, initializing fresh:', err);
     }
   }
 
@@ -68,12 +96,57 @@ function initDb() {
 let db = initDb();
 
 function saveDb() {
+  // 1. Atomic local file save
   try {
     const tmpFile = `${DB_FILE}.tmp.${Date.now()}`;
     fs.writeFileSync(tmpFile, JSON.stringify(db, null, 2), 'utf8');
     fs.renameSync(tmpFile, DB_FILE);
   } catch (err) {
-    console.error('Error saving DB atomically:', err);
+    console.error('[DATABASE] Error saving local DB atomically:', err);
+  }
+
+  // 2. Cloud database synchronization (Supabase / PostgreSQL)
+  if (pgPool) {
+    pgPool
+      .query(
+        `INSERT INTO mathverse_state (key, data, updated_at)
+         VALUES ('main_state', $1, NOW())
+         ON CONFLICT (key) DO UPDATE SET data = EXCLUDED.data, updated_at = NOW();`,
+        [JSON.stringify(db)]
+      )
+      .catch((err) => {
+        console.error('[DATABASE] Cloud sync error to Supabase/PostgreSQL:', err.message);
+      });
+  }
+}
+
+// Asynchronously load state from Cloud Database (Supabase) if configured
+async function loadStateFromCloud() {
+  if (!pgPool) return;
+  try {
+    await pgPool.query(`
+      CREATE TABLE IF NOT EXISTS mathverse_state (
+        key VARCHAR(64) PRIMARY KEY,
+        data JSONB NOT NULL,
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      );
+    `);
+    const res = await pgPool.query(`SELECT data FROM mathverse_state WHERE key = 'main_state' LIMIT 1;`);
+    if (res.rows && res.rows.length > 0 && res.rows[0].data) {
+      const cloudData = res.rows[0].data;
+      purgeDeletedAccounts(cloudData);
+      db = {
+        users: cloudData.users || {},
+        sessions: cloudData.sessions || {},
+        resetTokens: cloudData.resetTokens || {},
+        verificationCodes: cloudData.verificationCodes || {},
+        progress: cloudData.progress || {},
+        globalStats: cloudData.globalStats || { totalQuestionsSolvedCommunity: 348 },
+      };
+      console.log('[DATABASE] Successfully loaded state from Supabase / Cloud PostgreSQL.');
+    }
+  } catch (err) {
+    console.error('[DATABASE] Failed to load initial state from Supabase:', err.message);
   }
 }
 
@@ -917,6 +990,7 @@ const server = http.createServer((req, res) => {
   });
 });
 
-server.listen(PORT, () => {
+server.listen(PORT, async () => {
   console.log(`MATHVERSE full-stack service running on port ${PORT}`);
+  await loadStateFromCloud();
 });
