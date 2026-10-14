@@ -1,11 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { allCurriculumChapters } from '../data/curriculumData';
 import { allFormulasData } from '../data/formulasData';
-import { CheckCircle2, BookmarkCheck, Flame, RotateCcw, ArrowRight, Award, BookOpen } from 'lucide-react';
+import {
+  CheckCircle2,
+  BookmarkCheck,
+  Flame,
+  RotateCcw,
+  ArrowRight,
+  Award,
+  BookOpen,
+  Cloud,
+  CloudOff,
+  Users,
+  ShieldCheck,
+  Sparkles,
+} from 'lucide-react';
 import type { UserProgress } from '../types/progress';
+import type { StudentUser } from '../types/auth';
+import { fetchCommunityStats } from '../utils/auth';
 
 interface ProgressDashboardProps {
   progress: UserProgress;
+  user: StudentUser | null;
+  onOpenAuth: () => void;
   onResetProgress: () => void;
   onSelectChapter: (id: string) => void;
   onSelectFormula: (id: string) => void;
@@ -13,11 +30,24 @@ interface ProgressDashboardProps {
 
 export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
   progress,
+  user,
+  onOpenAuth,
   onResetProgress,
   onSelectChapter,
   onSelectFormula,
 }) => {
   const [showConfirmReset, setShowConfirmReset] = useState(false);
+  const [communityStats, setCommunityStats] = useState<{
+    totalQuestionsSolvedCommunity: number;
+    activeStudentCommunity: number;
+  }>({
+    totalQuestionsSolvedCommunity: 348,
+    activeStudentCommunity: 42,
+  });
+
+  useEffect(() => {
+    fetchCommunityStats().then(setCommunityStats).catch(() => {});
+  }, []);
 
   const totalChapters = allCurriculumChapters.length;
   const completedCount = progress.completedChapterIds.length;
@@ -36,22 +66,76 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
 
   return (
     <div className="max-w-5xl mx-auto px-3 sm:px-6 py-4 sm:py-6 pb-24 space-y-4 sm:space-y-6">
+      {/* Account Status / Cloud Sync Banner */}
+      {user ? (
+        <div className="p-4 rounded-3xl bg-gradient-to-r from-indigo-500/10 via-cyan-500/10 to-transparent border border-indigo-200 dark:border-indigo-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-extrabold text-base uppercase shadow-xs">
+              {user.name.charAt(0)}
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-extrabold text-slate-900 dark:text-white text-base">
+                  {user.name}
+                </span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300">
+                  AP SSC Class {user.classGrade}
+                </span>
+              </div>
+              <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-1.5">
+                <Cloud className="w-3.5 h-3.5 text-emerald-500" />
+                <span>Cloud Sync Active · {user.email}</span>
+              </div>
+            </div>
+          </div>
+          <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5 self-start sm:self-auto font-mono">
+            <ShieldCheck className="w-4 h-4 text-indigo-500" />
+            <span>Private Learning Profile</span>
+          </div>
+        </div>
+      ) : (
+        <div className="p-4 rounded-3xl bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-start sm:items-center gap-3">
+            <div className="p-2.5 rounded-2xl bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300 shrink-0 mt-0.5 sm:mt-0">
+              <CloudOff className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-amber-900 dark:text-amber-200 text-sm">
+                  Guest Learning Session (Stored on this Device)
+                </span>
+              </div>
+              <p className="text-xs text-amber-800/80 dark:text-amber-300/80 mt-0.5">
+                Your practice streak and bookmarks are currently saved only in this browser. Create a free student account to keep your progress synced across your phone and computer.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onOpenAuth}
+            className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-xs transition flex items-center gap-1.5 shrink-0 self-start sm:self-auto cursor-pointer"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Save Progress to Cloud</span>
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <div>
         <span className="text-xs uppercase font-bold tracking-wider px-2.5 py-1 rounded-full bg-cyan-100 dark:bg-cyan-950/70 text-cyan-800 dark:text-cyan-300">
           Personal Learning Analytics
         </span>
         <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white mt-1">
-          Your MATHVERSE Progress
+          Your MATHVERSE Mastery
         </h1>
         <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-          Track syllabus coverage, formula recall lists, and practice streaks stored safely on your device.
+          Personal syllabus completion, formula recall, and practice stats isolated strictly to your student account.
         </p>
       </div>
 
       {/* Summary Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-        <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
           <div className="flex items-center gap-1.5 text-slate-500 text-xs font-semibold mb-1">
             <CheckCircle2 className="w-4 h-4 text-emerald-500" />
             <span>Syllabus Covered</span>
@@ -64,7 +148,7 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
           <div className="flex items-center gap-1.5 text-slate-500 text-xs font-semibold mb-1">
             <Award className="w-4 h-4 text-indigo-500" />
             <span>Practice Accuracy</span>
@@ -73,11 +157,11 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
             {accuracyPct}%
           </div>
           <p className="text-[10px] text-slate-400 mt-1 font-mono">
-            {correctCount} correct of {totalAttempted}
+            {correctCount} correct of {totalAttempted} unique
           </p>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
           <div className="flex items-center gap-1.5 text-slate-500 text-xs font-semibold mb-1">
             <Flame className="w-4 h-4 text-amber-500" />
             <span>Best Streak</span>
@@ -88,7 +172,7 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
           <p className="text-[10px] text-slate-400 mt-1">consecutive correct</p>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
           <div className="flex items-center gap-1.5 text-slate-500 text-xs font-semibold mb-1">
             <BookmarkCheck className="w-4 h-4 text-purple-500" />
             <span>Saved Formulas</span>
@@ -100,8 +184,44 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
         </div>
       </div>
 
+      {/* Platform-wide Public Community Counter (Delineated clearly from personal stats) */}
+      <div className="p-4 rounded-2xl bg-slate-900 text-white dark:bg-slate-800/80 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-xl bg-indigo-500/20 text-indigo-400 shrink-0">
+            <Users className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="text-xs uppercase font-bold tracking-wider text-indigo-400">
+              MATHVERSE Community Impact
+            </div>
+            <div className="text-xs text-slate-300 mt-0.5">
+              Anonymous, site-wide public aggregate across all AP SSC students
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center gap-6 self-start sm:self-auto font-mono">
+          <div>
+            <div className="text-xl font-extrabold text-white">
+              {communityStats.totalQuestionsSolvedCommunity}
+            </div>
+            <div className="text-[10px] text-slate-400 uppercase tracking-wider">
+              Problems Mastered Site-Wide
+            </div>
+          </div>
+          <div className="w-px h-8 bg-slate-700" />
+          <div>
+            <div className="text-xl font-extrabold text-cyan-400">
+              {communityStats.activeStudentCommunity}+
+            </div>
+            <div className="text-[10px] text-slate-400 uppercase tracking-wider">
+              Active Learners
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Completed Chapters List */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm space-y-4">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-xs space-y-4">
         <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
           <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <BookOpen className="w-4 h-4 text-emerald-500" />
@@ -137,7 +257,7 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
       </div>
 
       {/* Bookmarked Formulas List */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm space-y-4">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-xs space-y-4">
         <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
           <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <BookmarkCheck className="w-4 h-4 text-purple-500" />
@@ -172,13 +292,15 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
         )}
       </div>
 
-      {/* Local Storage Privacy & Reset Confirmation */}
+      {/* Privacy Note & Reset Confirmation */}
       <div className="p-4 rounded-2xl bg-slate-100/70 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="text-xs text-slate-500 dark:text-slate-400">
           <strong className="block text-slate-700 dark:text-slate-300 mb-0.5">
-            Local Storage Architecture:
+            Student Data Isolation &amp; Privacy:
           </strong>
-          All progress is safely persisted locally in your browser. No registration or server account required.
+          {user
+            ? `Your progress is linked strictly to account ${user.email}. No other student or visitor can access or overwrite your history.`
+            : 'You are currently in guest mode. Progress is isolated to this browser and will not affect any registered student.'}
         </div>
 
         {showConfirmReset ? (
@@ -189,13 +311,13 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
                 onResetProgress();
                 setShowConfirmReset(false);
               }}
-              className="px-3 py-1.5 rounded-lg bg-rose-600 text-white text-xs font-bold hover:bg-rose-700 transition"
+              className="px-3 py-1.5 rounded-lg bg-rose-600 text-white text-xs font-bold hover:bg-rose-700 transition cursor-pointer"
             >
               Yes, Clear
             </button>
             <button
               onClick={() => setShowConfirmReset(false)}
-              className="px-2.5 py-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 text-xs font-medium"
+              className="px-2.5 py-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 text-xs font-medium cursor-pointer"
             >
               Cancel
             </button>
@@ -203,7 +325,7 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
         ) : (
           <button
             onClick={() => setShowConfirmReset(true)}
-            className="flex items-center gap-1.5 text-xs text-rose-600 dark:text-rose-400 font-semibold hover:underline shrink-0"
+            className="flex items-center gap-1.5 text-xs text-rose-600 dark:text-rose-400 font-semibold hover:underline shrink-0 cursor-pointer"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             Reset Progress

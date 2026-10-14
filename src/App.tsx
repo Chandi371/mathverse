@@ -9,6 +9,7 @@ import { FormulaLibrary } from './components/FormulaLibrary';
 import { PracticeStudio } from './components/PracticeStudio';
 import { ProgressDashboard } from './components/ProgressDashboard';
 import { SearchModal } from './components/SearchModal';
+import { AuthModal } from './components/AuthModal';
 import { chaptersData } from './data/curriculumData';
 import {
   loadProgress,
@@ -17,8 +18,12 @@ import {
   toggleBookmarkFormula,
   setLastVisitedChapter,
   resetAllProgress,
+  setActiveStudentId,
+  saveProgress,
 } from './utils/storage';
+import { fetchCurrentStudent, logoutStudent } from './utils/auth';
 import type { UserProgress } from './types/progress';
+import type { StudentUser } from './types/auth';
 
 export function App() {
   const [activeTab, setActiveTab] = useState<string>('home');
@@ -26,12 +31,49 @@ export function App() {
   const [activeChapterId, setActiveChapterId] = useState<string>('c10-s1-ap');
   const [activeLabId, setActiveLabId] = useState<string>('area-model');
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
+
+  // Authentication & Per-Student Session State
+  const [user, setUser] = useState<StudentUser | null>(null);
   const [progress, setProgress] = useState<UserProgress>(loadProgress());
 
+  // Restore authenticated session on load
   useEffect(() => {
-    // Sync progress on load
-    setProgress(loadProgress());
+    let isMounted = true;
+    fetchCurrentStudent().then((result) => {
+      if (!isMounted) return;
+      if (result && result.user) {
+        setUser(result.user);
+        setActiveStudentId(result.user.id);
+        if (result.progress) {
+          saveProgress(result.progress);
+          setProgress(result.progress);
+        } else {
+          setProgress(loadProgress());
+        }
+      } else {
+        setActiveStudentId(null);
+        setProgress(loadProgress());
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
   }, []);
+
+  const handleAuthSuccess = (authenticatedUser: StudentUser, updatedProgress: UserProgress) => {
+    setUser(authenticatedUser);
+    setActiveStudentId(authenticatedUser.id);
+    setProgress(updatedProgress);
+  };
+
+  const handleLogout = async () => {
+    await logoutStudent();
+    setUser(null);
+    setActiveStudentId(null);
+    const guestFresh = loadProgress();
+    setProgress(guestFresh);
+  };
 
   const handleSelectChapter = (chapterId: string) => {
     setActiveChapterId(chapterId);
@@ -87,6 +129,9 @@ export function App() {
         setSelectedClass={setSelectedClass}
         onOpenSearch={() => setIsSearchOpen(true)}
         progress={progress}
+        user={user}
+        onOpenAuth={() => setIsAuthModalOpen(true)}
+        onLogout={handleLogout}
       />
 
       {/* Main View Area */}
@@ -132,12 +177,16 @@ export function App() {
           <PracticeStudio
             progress={progress}
             onRecordAnswer={handleRecordAnswer}
+            user={user}
+            onOpenAuth={() => setIsAuthModalOpen(true)}
           />
         )}
 
         {activeTab === 'progress' && (
           <ProgressDashboard
             progress={progress}
+            user={user}
+            onOpenAuth={() => setIsAuthModalOpen(true)}
             onResetProgress={handleResetProgress}
             onSelectChapter={handleSelectChapter}
             onSelectFormula={handleSelectFormula}
@@ -152,6 +201,13 @@ export function App() {
         onSelectChapter={handleSelectChapter}
         onSelectFormula={handleSelectFormula}
         onSelectLab={handleOpenLab}
+      />
+
+      {/* Student Authentication Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onAuthSuccess={handleAuthSuccess}
       />
 
       {/* Mobile-First Bottom Navigation Bar */}

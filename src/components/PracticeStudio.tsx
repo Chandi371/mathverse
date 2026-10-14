@@ -21,13 +21,25 @@ import {
 } from 'lucide-react';
 import type { PracticeQuestion, QuestionDifficulty, ClassGrade, Semester } from '../types/curriculum';
 import type { UserProgress } from '../types/progress';
+import type { StudentUser } from '../types/auth';
 
 interface PracticeStudioProps {
   progress: UserProgress;
   onRecordAnswer: (questionId: string, isCorrect: boolean) => void;
+  user?: StudentUser | null;
+  onOpenAuth?: () => void;
 }
 
-export const PracticeStudio: React.FC<PracticeStudioProps> = ({ progress, onRecordAnswer }) => {
+export const PracticeStudio: React.FC<PracticeStudioProps> = ({
+  progress,
+  onRecordAnswer,
+  user,
+  onOpenAuth,
+}) => {
+  // Session-level in-memory counters (distinct from lifetime and global)
+  const [sessionAttempted, setSessionAttempted] = useState<number>(0);
+  const [sessionCorrect, setSessionCorrect] = useState<number>(0);
+
   // Session Configuration State
   const [selectedClass, setSelectedClass] = useState<'all' | ClassGrade>(10);
   const [selectedSemester, setSelectedSemester] = useState<'all' | Semester>('all');
@@ -117,6 +129,10 @@ export const PracticeStudio: React.FC<PracticeStudioProps> = ({ progress, onReco
 
     setIsCorrect(correct);
     setSubmitted(true);
+    setSessionAttempted((prev) => prev + 1);
+    if (correct) {
+      setSessionCorrect((prev) => prev + 1);
+    }
     onRecordAnswer(currentQ.id, correct);
 
     if (correct) {
@@ -183,17 +199,32 @@ export const PracticeStudio: React.FC<PracticeStudioProps> = ({ progress, onReco
           <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-0.5">
             Syllabus-wide question registry ensuring balanced topic distribution across all 26 AP SSC chapters.
           </p>
+          {!user && onOpenAuth && (
+            <div className="text-[11px] text-amber-600 dark:text-amber-400 flex items-center gap-1.5 mt-1 font-medium">
+              <span>Guest session: saved locally on this device.</span>
+              <button
+                onClick={onOpenAuth}
+                className="underline font-bold hover:text-amber-700 dark:hover:text-amber-300 cursor-pointer"
+              >
+                Sign in to back up streak to cloud
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* Stats Pill */}
-        <div className="flex items-center gap-3 bg-white dark:bg-slate-900 p-2 px-3 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs self-start sm:self-auto">
-          <div className="flex items-center gap-1.5 text-amber-500 font-bold text-xs sm:text-sm">
+        {/* Stats Pill: Clearly separating streak, current session score, and lifetime mastery */}
+        <div className="flex items-center gap-2.5 bg-white dark:bg-slate-900 p-2 px-3 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs self-start sm:self-auto flex-wrap">
+          <div className="flex items-center gap-1 text-amber-500 font-bold text-xs sm:text-sm">
             <Flame className="w-4 h-4 fill-amber-500" />
             <span>{progress.practiceStats.currentStreak} streak</span>
           </div>
           <div className="w-px h-4 bg-slate-200 dark:bg-slate-700" />
-          <div className="text-xs text-slate-500 font-mono">
-            {progress.practiceStats.correctCount} / {progress.practiceStats.totalAttempted} solved
+          <div className="text-xs text-slate-500 font-mono" title="Questions answered correctly in this active session">
+            <span className="font-semibold text-slate-800 dark:text-slate-200">{sessionCorrect}/{sessionAttempted}</span> session
+          </div>
+          <div className="w-px h-4 bg-slate-200 dark:bg-slate-700" />
+          <div className="text-xs text-slate-500 font-mono" title="Total unique syllabus questions mastered">
+            <span className="font-semibold text-indigo-600 dark:text-indigo-400">{progress.practiceStats.correctCount}</span> mastered
           </div>
         </div>
       </div>
