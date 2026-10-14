@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { allCurriculumChapters } from '../data/curriculumData';
 import { allFormulasData } from '../data/formulasData';
 import {
@@ -10,13 +10,11 @@ import {
   Award,
   BookOpen,
   Cloud,
-  Users,
   ShieldCheck,
 } from 'lucide-react';
 import { GuestBanner } from './GuestBanner';
 import type { UserProgress } from '../types/progress';
 import type { StudentUser } from '../types/auth';
-import { fetchCommunityStats } from '../utils/auth';
 
 interface ProgressDashboardProps {
   progress: UserProgress;
@@ -36,17 +34,6 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
   onSelectFormula,
 }) => {
   const [showConfirmReset, setShowConfirmReset] = useState(false);
-  const [communityStats, setCommunityStats] = useState<{
-    totalQuestionsSolvedCommunity: number;
-    activeStudentCommunity: number;
-  }>({
-    totalQuestionsSolvedCommunity: 348,
-    activeStudentCommunity: 42,
-  });
-
-  useEffect(() => {
-    fetchCommunityStats().then(setCommunityStats).catch(() => {});
-  }, []);
 
   const totalChapters = allCurriculumChapters.length;
   const completedCount = progress.completedChapterIds.length;
@@ -157,42 +144,6 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
             {progress.bookmarkedFormulaIds.length}
           </div>
           <p className="text-[10px] text-slate-400 mt-1">bookmarked for revision</p>
-        </div>
-      </div>
-
-      {/* Platform-wide Public Community Counter (Delineated clearly from personal stats) */}
-      <div className="p-4 rounded-2xl bg-slate-900 text-white dark:bg-slate-800/80 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-indigo-500/20 text-indigo-400 shrink-0">
-            <Users className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="text-xs uppercase font-bold tracking-wider text-indigo-400">
-              MATHVERSE Community Impact
-            </div>
-            <div className="text-xs text-slate-300 mt-0.5">
-              Anonymous, site-wide public aggregate across all AP SSC students
-            </div>
-          </div>
-        </div>
-        <div className="flex items-center gap-6 self-start sm:self-auto font-mono">
-          <div>
-            <div className="text-xl font-extrabold text-white">
-              {communityStats.totalQuestionsSolvedCommunity}
-            </div>
-            <div className="text-[10px] text-slate-400 uppercase tracking-wider">
-              Problems Mastered Site-Wide
-            </div>
-          </div>
-          <div className="w-px h-8 bg-slate-700" />
-          <div>
-            <div className="text-xl font-extrabold text-cyan-400">
-              {communityStats.activeStudentCommunity}+
-            </div>
-            <div className="text-[10px] text-slate-400 uppercase tracking-wider">
-              Active Learners
-            </div>
-          </div>
         </div>
       </div>
 
