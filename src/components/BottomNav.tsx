@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, BookOpen, FlaskConical, Sigma, Dumbbell, BarChart3 } from 'lucide-react';
+import { Home, BookOpen, FlaskConical, Sigma, Dumbbell, BarChart3, Library } from 'lucide-react';
 
 interface BottomNavProps {
   activeTab: string;
@@ -10,6 +10,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab })
   const navItems = [
     { id: 'home', label: 'Home', icon: Home },
     { id: 'chapters', label: 'Chapters', icon: BookOpen },
+    { id: 'resources', label: 'Books', icon: Library },
     { id: 'labs', label: 'Labs', icon: FlaskConical },
     { id: 'formulas', label: 'Formulas', icon: Sigma },
     { id: 'practice', label: 'Practice', icon: Dumbbell },

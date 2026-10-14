@@ -86,20 +86,27 @@ export const HomeView: React.FC<HomeViewProps> = ({
         </p>
 
         {/* Quick CTA Buttons */}
-        <div className="grid grid-cols-2 max-w-xs sm:max-w-md mx-auto gap-2 sm:gap-3 pt-0.5">
+        <div className="grid grid-cols-3 max-w-sm sm:max-w-xl mx-auto gap-1.5 sm:gap-2.5 pt-0.5">
           <button
             onClick={() => onNavigateTab('labs')}
-            className="flex items-center justify-center gap-1.5 px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-indigo-600 text-white font-bold text-xs sm:text-sm hover:bg-indigo-700 shadow-sm active:scale-95 transition whitespace-nowrap"
+            className="flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-indigo-600 text-white font-bold text-xs sm:text-sm hover:bg-indigo-700 shadow-sm active:scale-95 transition whitespace-nowrap cursor-pointer"
           >
-            <FlaskConical className="w-4 h-4 shrink-0" />
+            <FlaskConical className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
             <span>Interactive Labs</span>
           </button>
           <button
             onClick={() => onNavigateTab('chapters')}
-            className="flex items-center justify-center gap-1.5 px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 font-semibold text-xs sm:text-sm hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-95 transition whitespace-nowrap"
+            className="flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 font-semibold text-xs sm:text-sm hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-95 transition whitespace-nowrap cursor-pointer"
           >
-            <BookOpen className="w-4 h-4 shrink-0" />
+            <BookOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
             <span>26 Chapters</span>
+          </button>
+          <button
+            onClick={() => onNavigateTab('resources')}
+            className="flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-gradient-to-r from-amber-500/10 to-indigo-500/10 border border-amber-300 dark:border-amber-700/60 text-amber-900 dark:text-amber-200 font-bold text-xs sm:text-sm hover:bg-amber-100 dark:hover:bg-amber-950/40 active:scale-95 transition whitespace-nowrap cursor-pointer"
+          >
+            <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500 shrink-0" />
+            <span>Textbooks &amp; Papers</span>
           </button>
         </div>
       </section>
@@ -128,6 +135,31 @@ export const HomeView: React.FC<HomeViewProps> = ({
         </div>
 
         <AreaModelLab />
+      </section>
+
+      {/* Official Textbooks & Board Blueprint Showcase Banner */}
+      <section className="p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-indigo-900/40 via-purple-900/30 to-slate-900/60 border border-indigo-500/20 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+              New Exam Resources
+            </span>
+            <span className="text-xs text-slate-400">Class 10 SSC Blueprint 2026-27</span>
+          </div>
+          <h3 className="text-base sm:text-lg font-black text-white">
+            Official SCERT Textbooks &amp; SSC Board Examination Blueprint
+          </h3>
+          <p className="text-xs text-slate-300 max-w-2xl">
+            Read online or download Class 9 &amp; 10 bilingual textbooks, official 100-mark chapter-wise weightage, and Model Papers 1 &amp; 2 directly in MATHVERSE.
+          </p>
+        </div>
+        <button
+          onClick={() => onNavigateTab('resources')}
+          className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center justify-center gap-2 transition shrink-0 shadow-xs cursor-pointer"
+        >
+          <span>Open Library &amp; Blueprint</span>
+          <ArrowRight className="w-4 h-4" />
+        </button>
       </section>
 
       {/* Core Pillars Grid */}

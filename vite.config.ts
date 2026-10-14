@@ -22,6 +22,7 @@ export default defineConfig({
         manualChunks(id: string) {
           if (id.includes('katex')) return 'katex';
           if (id.includes('lucide-react')) return 'icons';
+          if (id.includes('pdfjs-dist')) return 'pdfjs';
         },
       },
     },

@@ -8,6 +8,7 @@ import { LabHubView } from './components/LabHubView';
 import { FormulaLibrary } from './components/FormulaLibrary';
 import { PracticeStudio } from './components/PracticeStudio';
 import { ProgressDashboard } from './components/ProgressDashboard';
+import { ResourceLibraryView } from './components/ResourceLibraryView';
 import { SearchModal } from './components/SearchModal';
 import { AuthModal } from './components/AuthModal';
 import { chaptersData } from './data/curriculumData';
@@ -194,6 +195,13 @@ export function App() {
           />
         )}
 
+        {activeTab === 'resources' && (
+          <ResourceLibraryView
+            selectedClassFilter={selectedClass}
+            onSelectClassFilter={setSelectedClass}
+          />
+        )}
+
         {activeTab === 'progress' && (
           <ProgressDashboard
             progress={progress}
@@ -213,6 +221,7 @@ export function App() {
         onSelectChapter={handleSelectChapter}
         onSelectFormula={handleSelectFormula}
         onSelectLab={handleOpenLab}
+        onNavigateTab={setActiveTab}
       />
 
       {/* Student Authentication Modal */}

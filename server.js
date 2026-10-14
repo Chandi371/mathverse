@@ -949,6 +949,7 @@ const MIME_TYPES = {
   '.woff': 'font/woff',
   '.woff2': 'font/woff2',
   '.ttf': 'font/ttf',
+  '.pdf': 'application/pdf',
 };
 
 const server = http.createServer((req, res) => {
@@ -958,6 +959,14 @@ const server = http.createServer((req, res) => {
 
   const urlPath = req.url?.split('?')[0] || '/';
   let filePath = path.join(DIST_DIR, urlPath);
+
+  // Check in DIST_DIR or fallback to public folder
+  if (!fs.existsSync(filePath)) {
+    const publicPath = path.join(__dirname, 'public', urlPath);
+    if (fs.existsSync(publicPath) && !fs.statSync(publicPath).isDirectory()) {
+      filePath = publicPath;
+    }
+  }
 
   if (fs.existsSync(filePath) && fs.statSync(filePath).isDirectory()) {
     filePath = path.join(filePath, 'index.html');
@@ -969,6 +978,52 @@ const server = http.createServer((req, res) => {
 
   const ext = path.extname(filePath).toLowerCase();
   const contentType = MIME_TYPES[ext] || 'application/octet-stream';
+
+  // Efficient Range-request streaming for PDFs (enables page-by-page streaming on mobile)
+  if (ext === '.pdf' && fs.existsSync(filePath)) {
+    try {
+      const stat = fs.statSync(filePath);
+      const totalSize = stat.size;
+      const range = req.headers.range;
+
+      if (range) {
+        const parts = range.replace(/bytes=/, '').split('-');
+        const start = parseInt(parts[0], 10);
+        const end = parts[1] ? parseInt(parts[1], 10) : totalSize - 1;
+
+        if (start >= totalSize || end >= totalSize || start > end) {
+          res.writeHead(416, {
+            'Content-Range': `bytes */${totalSize}`,
+          });
+          return res.end();
+        }
+
+        const chunkSize = end - start + 1;
+        res.writeHead(206, {
+          'Content-Range': `bytes ${start}-${end}/${totalSize}`,
+          'Accept-Ranges': 'bytes',
+          'Content-Length': chunkSize,
+          'Content-Type': 'application/pdf',
+          'Cache-Control': 'public, max-age=86400',
+        });
+        const fileStream = fs.createReadStream(filePath, { start, end });
+        return fileStream.pipe(res);
+      } else {
+        res.writeHead(200, {
+          'Content-Length': totalSize,
+          'Content-Type': 'application/pdf',
+          'Accept-Ranges': 'bytes',
+          'Cache-Control': 'public, max-age=86400',
+        });
+        const fileStream = fs.createReadStream(filePath);
+        return fileStream.pipe(res);
+      }
+    } catch (err) {
+      console.error('[PDF STREAM ERROR]', err);
+      res.writeHead(500, { 'Content-Type': 'text/plain' });
+      return res.end('Internal server error loading PDF');
+    }
+  }
 
   fs.readFile(filePath, (err, content) => {
     if (err) {

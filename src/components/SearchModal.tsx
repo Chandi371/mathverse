@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, X, BookOpen, Sigma, FlaskConical, ArrowRight } from 'lucide-react';
+import { Search, X, BookOpen, Sigma, FlaskConical, ArrowRight, Library } from 'lucide-react';
 import { allCurriculumChapters } from '../data/curriculumData';
 import { allFormulasData } from '../data/formulasData';
+import { officialTextbooks, class10BoardExamResources } from '../data/textbooksData';
 
 interface SearchModalProps {
   isOpen: boolean;
@@ -9,6 +10,7 @@ interface SearchModalProps {
   onSelectChapter: (chapterId: string) => void;
   onSelectFormula: (formulaId: string) => void;
   onSelectLab: (labId: string) => void;
+  onNavigateTab?: (tab: string) => void;
 }
 
 export const SearchModal: React.FC<SearchModalProps> = ({
@@ -17,6 +19,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
   onSelectChapter,
   onSelectFormula,
   onSelectLab,
+  onNavigateTab,
 }) => {
   const [query, setQuery] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -55,7 +58,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
           c.topicCategory.toLowerCase().includes(cleanQuery) ||
           `class ${c.classGrade}`.includes(cleanQuery)
       )
-    : allCurriculumChapters.slice(0, 4);
+    : allCurriculumChapters.slice(0, 3);
 
   const filteredFormulas = cleanQuery
     ? allFormulasData.filter(
@@ -65,7 +68,17 @@ export const SearchModal: React.FC<SearchModalProps> = ({
           f.latex.toLowerCase().includes(cleanQuery) ||
           f.category.toLowerCase().includes(cleanQuery)
       )
-    : allFormulasData.slice(0, 4);
+    : allFormulasData.slice(0, 3);
+
+  const allDocs = [...officialTextbooks, ...class10BoardExamResources];
+  const filteredDocs = cleanQuery
+    ? allDocs.filter(
+        (d) =>
+          d.title.toLowerCase().includes(cleanQuery) ||
+          d.subtitle.toLowerCase().includes(cleanQuery) ||
+          ('chapters' in d && d.chapters.some((ch: string) => ch.toLowerCase().includes(cleanQuery)))
+      )
+    : [];
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-12 sm:pt-20 px-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-150">
@@ -133,6 +146,43 @@ export const SearchModal: React.FC<SearchModalProps> = ({
                       </p>
                     </div>
                     <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-indigo-500 opacity-0 group-hover:opacity-100 transition" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Textbooks & Exam Resources Section */}
+          {filteredDocs.length > 0 && (
+            <div>
+              <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-2 mb-1.5 flex items-center gap-1.5">
+                <Library className="w-3.5 h-3.5 text-amber-500" />
+                Textbooks &amp; Exam Papers ({filteredDocs.length})
+              </div>
+              <div className="space-y-1">
+                {filteredDocs.map((doc) => (
+                  <div
+                    key={doc.id}
+                    onClick={() => {
+                      onNavigateTab?.('resources');
+                      onClose();
+                    }}
+                    className="p-2.5 rounded-xl hover:bg-amber-50 dark:hover:bg-slate-800 cursor-pointer flex items-center justify-between group transition"
+                  >
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-slate-800 dark:text-slate-200 group-hover:text-amber-600 dark:group-hover:text-amber-400">
+                          {doc.title}
+                        </span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100/60 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 font-mono">
+                          {doc.pageCount} Pages · {doc.fileSizeMB}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 line-clamp-1 mt-0.5">
+                        {doc.subtitle}
+                      </p>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-amber-500 opacity-0 group-hover:opacity-100 transition" />
                   </div>
                 ))}
               </div>

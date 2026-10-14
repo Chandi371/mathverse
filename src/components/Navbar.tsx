@@ -157,6 +157,16 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               Practice Studio
             </button>
+            <button
+              onClick={() => setActiveTab('resources')}
+              className={`px-3 py-1.5 rounded-lg transition ${
+                activeTab === 'resources'
+                  ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50 font-semibold'
+                  : 'hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
+            >
+              Textbooks &amp; Blueprint
+            </button>
           </nav>
 
           {/* Right Tools: Search, Theme Toggle, Progress, & Account */}
