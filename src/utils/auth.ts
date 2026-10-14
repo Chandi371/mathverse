@@ -37,20 +37,34 @@ async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> 
 
   const data = await res.json();
   if (!res.ok) {
-    throw new Error(data.error || `Request failed with status ${res.status}`);
+    const error: any = new Error(data.error || `Request failed with status ${res.status}`);
+    error.status = res.status;
+    error.data = data;
+    throw error;
   }
   return data as T;
 }
 
 export async function registerStudent(
   email: string,
+  username: string,
   password: string,
-  name: string,
+  confirmPassword: string,
   classGrade: 9 | 10
-): Promise<{ user: StudentUser; token: string; progress: any }> {
-  const data = await apiFetch<AuthResponse>('/api/auth/register', {
+): Promise<AuthResponse> {
+  return await apiFetch<AuthResponse>('/api/auth/register', {
     method: 'POST',
-    body: JSON.stringify({ email, password, name, classGrade }),
+    body: JSON.stringify({ email, username, password, confirmPassword, classGrade }),
+  });
+}
+
+export async function verifyEmail(
+  email: string,
+  code: string
+): Promise<{ user: StudentUser; token: string; progress: any }> {
+  const data = await apiFetch<AuthResponse>('/api/auth/verify-email', {
+    method: 'POST',
+    body: JSON.stringify({ email, code }),
   });
   if (data.token) {
     setStoredToken(data.token);
@@ -60,6 +74,13 @@ export async function registerStudent(
     token: data.token!,
     progress: data.progress,
   };
+}
+
+export async function resendVerificationCode(email: string): Promise<AuthResponse> {
+  return await apiFetch<AuthResponse>('/api/auth/resend-verification', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  });
 }
 
 export async function loginStudent(
@@ -103,7 +124,9 @@ export async function logoutStudent(): Promise<void> {
   }
 }
 
-export async function requestPasswordReset(email: string): Promise<{ success: boolean; message: string; resetToken?: string }> {
+export async function requestPasswordReset(
+  email: string
+): Promise<{ success: boolean; message: string; resetToken?: string }> {
   return await apiFetch<{ success: boolean; message: string; resetToken?: string }>(
     '/api/auth/request-password-reset',
     {
@@ -113,19 +136,28 @@ export async function requestPasswordReset(email: string): Promise<{ success: bo
   );
 }
 
-export async function submitPasswordReset(token: string, newPassword: string): Promise<{ success: boolean; message: string }> {
+export async function submitPasswordReset(
+  token: string,
+  newPassword: string,
+  confirmNewPassword: string
+): Promise<{ success: boolean; message: string }> {
   return await apiFetch<{ success: boolean; message: string }>(
     '/api/auth/reset-password',
     {
       method: 'POST',
-      body: JSON.stringify({ token, newPassword }),
+      body: JSON.stringify({ token, newPassword, confirmNewPassword }),
     }
   );
 }
 
-export async function fetchCommunityStats(): Promise<{ totalQuestionsSolvedCommunity: number; activeStudentCommunity: number }> {
+export async function fetchCommunityStats(): Promise<{
+  totalQuestionsSolvedCommunity: number;
+  activeStudentCommunity: number;
+}> {
   try {
-    return await apiFetch<{ totalQuestionsSolvedCommunity: number; activeStudentCommunity: number }>('/api/stats/global');
+    return await apiFetch<{ totalQuestionsSolvedCommunity: number; activeStudentCommunity: number }>(
+      '/api/stats/global'
+    );
   } catch {
     return {
       totalQuestionsSolvedCommunity: 348,

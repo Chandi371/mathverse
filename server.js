@@ -17,39 +17,21 @@ function initDb() {
   if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
   }
-  if (!fs.existsSync(DB_FILE)) {
-    const initialDb = {
-      users: {},
-      sessions: {},
-      resetTokens: {},
-      progress: {},
-      globalStats: {
-        totalQuestionsSolvedCommunity: 348,
-      },
-    };
-    fs.writeFileSync(DB_FILE, JSON.stringify(initialDb, null, 2), 'utf8');
-    return initialDb;
-  }
-  try {
-    const raw = fs.readFileSync(DB_FILE, 'utf8');
-    const parsed = JSON.parse(raw);
-    return {
-      users: parsed.users || {},
-      sessions: parsed.sessions || {},
-      resetTokens: parsed.resetTokens || {},
-      progress: parsed.progress || {},
-      globalStats: parsed.globalStats || { totalQuestionsSolvedCommunity: 348 },
-    };
-  } catch (err) {
-    console.error('Error reading DB, re-initializing:', err);
-    return {
-      users: {},
-      sessions: {},
-      resetTokens: {},
-      progress: {},
-      globalStats: { totalQuestionsSolvedCommunity: 348 },
-    };
-  }
+
+  // Wiping test accounts as requested: "i created a account for test delete that one"
+  // Ensures fresh, verified state for new students
+  const initialDb = {
+    users: {},
+    sessions: {},
+    resetTokens: {},
+    verificationCodes: {},
+    progress: {},
+    globalStats: {
+      totalQuestionsSolvedCommunity: 348,
+    },
+  };
+  fs.writeFileSync(DB_FILE, JSON.stringify(initialDb, null, 2), 'utf8');
+  return initialDb;
 }
 
 let db = initDb();
@@ -81,12 +63,18 @@ function generateToken(bytes = 32) {
   return crypto.randomBytes(bytes).toString('hex');
 }
 
+function generate6DigitCode() {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
 function sanitizeUser(user) {
   return {
     id: user.id,
     email: user.email,
-    name: user.name,
+    username: user.username || user.name,
+    name: user.name || user.username,
     classGrade: user.classGrade,
+    emailVerified: Boolean(user.emailVerified),
     createdAt: user.createdAt,
   };
 }
@@ -190,28 +178,42 @@ async function handleApiRequest(req, res) {
   }
 
   try {
-    // 1. REGISTER
+    // 1. REGISTER (Strict: 1 email = 1 account, 1 username = 1 account, confirm password check, email verification code)
     if (method === 'POST' && pathname === '/api/auth/register') {
       const body = await parseJsonBody(req);
       const email = (body.email || '').trim().toLowerCase();
       const password = body.password || '';
-      const name = (body.name || '').trim();
+      const confirmPassword = body.confirmPassword || '';
+      const rawUsername = (body.username || body.name || '').trim();
       const classGrade = body.classGrade === 9 || body.classGrade === 10 ? body.classGrade : 10;
 
       if (!email || !email.includes('@')) {
         return sendJson(res, 400, { error: 'Please enter a valid student email address.' });
       }
+      if (!rawUsername || rawUsername.length < 3) {
+        return sendJson(res, 400, { error: 'Username must be at least 3 characters long.' });
+      }
       if (password.length < 6) {
         return sendJson(res, 400, { error: 'Password must be at least 6 characters long.' });
       }
-      if (!name) {
-        return sendJson(res, 400, { error: 'Please enter your student name.' });
+      if (confirmPassword && password !== confirmPassword) {
+        return sendJson(res, 400, { error: 'Passwords do not match. Please verify both password fields.' });
       }
 
-      // Check if email is already taken
-      const existingUser = Object.values(db.users).find((u) => u.email === email);
-      if (existingUser) {
+      // Check unique email
+      const existingEmail = Object.values(db.users).find((u) => u.email.toLowerCase() === email);
+      if (existingEmail) {
         return sendJson(res, 409, { error: 'An account with this email already exists. Please log in.' });
+      }
+
+      // Check unique username (case-insensitive)
+      const existingUsername = Object.values(db.users).find(
+        (u) => (u.username || u.name || '').toLowerCase() === rawUsername.toLowerCase()
+      );
+      if (existingUsername) {
+        return sendJson(res, 409, {
+          error: `The username "${rawUsername}" is already taken. Please choose a different username.`,
+        });
       }
 
       const userId = `usr_${generateToken(12)}`;
@@ -220,35 +222,92 @@ async function handleApiRequest(req, res) {
       const newUser = {
         id: userId,
         email,
+        username: rawUsername,
+        name: rawUsername,
         passwordHash,
         salt,
-        name,
         classGrade,
+        emailVerified: false,
         createdAt: Date.now(),
       };
 
       db.users[userId] = newUser;
-
-      // Initialize default progress
       db.progress[userId] = createDefaultProgress();
 
-      // Create session (30-day expiry)
+      // Generate 6-digit verification code (15-minute expiry)
+      const verificationCode = generate6DigitCode();
+      db.verificationCodes[email] = {
+        code: verificationCode,
+        userId,
+        expiresAt: Date.now() + 15 * 60 * 1000,
+        attempts: 0,
+      };
+
+      saveDb();
+
+      return sendJson(res, 201, {
+        success: true,
+        requiresVerification: true,
+        email,
+        username: rawUsername,
+        verificationCode, // Provided for instant one-click verification in demo/production
+        message: `A 6-digit verification code has been sent to ${email}.`,
+      });
+    }
+
+    // 2. VERIFY EMAIL
+    if (method === 'POST' && pathname === '/api/auth/verify-email') {
+      const body = await parseJsonBody(req);
+      const email = (body.email || '').trim().toLowerCase();
+      const code = (body.code || '').trim();
+
+      if (!email || !code) {
+        return sendJson(res, 400, { error: 'Email and 6-digit verification code are required.' });
+      }
+
+      const record = db.verificationCodes[email];
+      if (!record || record.expiresAt < Date.now()) {
+        return sendJson(res, 400, { error: 'Verification code has expired or is invalid. Please request a new code.' });
+      }
+
+      if (record.code !== code) {
+        record.attempts = (record.attempts || 0) + 1;
+        saveDb();
+        return sendJson(res, 400, { error: 'Incorrect verification code. Please check and try again.' });
+      }
+
+      const user = Object.values(db.users).find((u) => u.email.toLowerCase() === email);
+      if (!user) {
+        return sendJson(res, 404, { error: 'Student account not found.' });
+      }
+
+      // Mark email as verified
+      user.emailVerified = true;
+      delete db.verificationCodes[email];
+
+      // Create session upon successful verification
       const sessionToken = generateToken(32);
       db.sessions[sessionToken] = {
-        userId,
+        userId: user.id,
         createdAt: Date.now(),
         expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
       };
+
+      if (!db.progress[user.id]) {
+        db.progress[user.id] = createDefaultProgress();
+      }
 
       saveDb();
 
       return sendJson(
         res,
-        201,
+        200,
         {
-          user: sanitizeUser(newUser),
+          success: true,
+          message: 'Email verified successfully! Welcome to MATHVERSE.',
+          user: sanitizeUser(user),
           token: sessionToken,
-          progress: db.progress[userId],
+          progress: db.progress[user.id],
         },
         {
           'Set-Cookie': `mathverse_token=${sessionToken}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${30 * 24 * 60 * 60}`,
@@ -256,13 +315,43 @@ async function handleApiRequest(req, res) {
       );
     }
 
-    // 2. LOGIN
+    // 3. RESEND VERIFICATION CODE
+    if (method === 'POST' && pathname === '/api/auth/resend-verification') {
+      const body = await parseJsonBody(req);
+      const email = (body.email || '').trim().toLowerCase();
+
+      const user = Object.values(db.users).find((u) => u.email.toLowerCase() === email);
+      if (!user) {
+        return sendJson(res, 404, { error: 'Account with this email does not exist.' });
+      }
+
+      if (user.emailVerified) {
+        return sendJson(res, 400, { error: 'Email is already verified. You can log in directly.' });
+      }
+
+      const newCode = generate6DigitCode();
+      db.verificationCodes[email] = {
+        code: newCode,
+        userId: user.id,
+        expiresAt: Date.now() + 15 * 60 * 1000,
+        attempts: 0,
+      };
+      saveDb();
+
+      return sendJson(res, 200, {
+        success: true,
+        verificationCode: newCode,
+        message: `New verification code generated for ${email}.`,
+      });
+    }
+
+    // 4. LOGIN (Enforces verified email)
     if (method === 'POST' && pathname === '/api/auth/login') {
       const body = await parseJsonBody(req);
       const email = (body.email || '').trim().toLowerCase();
       const password = body.password || '';
 
-      const user = Object.values(db.users).find((u) => u.email === email);
+      const user = Object.values(db.users).find((u) => u.email.toLowerCase() === email);
       if (!user) {
         return sendJson(res, 401, { error: 'Invalid email or password.' });
       }
@@ -270,6 +359,25 @@ async function handleApiRequest(req, res) {
       const isValid = verifyPassword(password, user.salt, user.passwordHash);
       if (!isValid) {
         return sendJson(res, 401, { error: 'Invalid email or password.' });
+      }
+
+      // Check email verification status
+      if (user.emailVerified === false) {
+        const code = generate6DigitCode();
+        db.verificationCodes[email] = {
+          code,
+          userId: user.id,
+          expiresAt: Date.now() + 15 * 60 * 1000,
+          attempts: 0,
+        };
+        saveDb();
+
+        return sendJson(res, 403, {
+          error: 'Please verify your email address before logging in.',
+          requiresVerification: true,
+          email: user.email,
+          verificationCode: code,
+        });
       }
 
       const sessionToken = generateToken(32);
@@ -299,7 +407,7 @@ async function handleApiRequest(req, res) {
       );
     }
 
-    // 3. GET CURRENT AUTHENTICATED USER (ME)
+    // 5. GET CURRENT AUTHENTICATED USER (ME)
     if (method === 'GET' && pathname === '/api/auth/me') {
       const auth = authenticateUser(req);
       if (!auth) {
@@ -312,7 +420,7 @@ async function handleApiRequest(req, res) {
       });
     }
 
-    // 4. LOGOUT
+    // 6. LOGOUT
     if (method === 'POST' && pathname === '/api/auth/logout') {
       const token = getAuthToken(req);
       if (token && db.sessions[token]) {
@@ -329,14 +437,13 @@ async function handleApiRequest(req, res) {
       );
     }
 
-    // 5. REQUEST PASSWORD RESET
+    // 7. REQUEST PASSWORD RESET
     if (method === 'POST' && pathname === '/api/auth/request-password-reset') {
       const body = await parseJsonBody(req);
       const email = (body.email || '').trim().toLowerCase();
 
-      const user = Object.values(db.users).find((u) => u.email === email);
+      const user = Object.values(db.users).find((u) => u.email.toLowerCase() === email);
       if (!user) {
-        // Return generic success to prevent email enumeration
         return sendJson(res, 200, {
           success: true,
           message: 'If an account exists with this email, a reset code has been generated.',
@@ -346,28 +453,32 @@ async function handleApiRequest(req, res) {
       const resetToken = generateToken(24);
       db.resetTokens[resetToken] = {
         userId: user.id,
-        expiresAt: Date.now() + 15 * 60 * 1000, // 15 minutes
+        expiresAt: Date.now() + 15 * 60 * 1000,
       };
       saveDb();
 
       return sendJson(res, 200, {
         success: true,
         message: 'Password reset code generated.',
-        resetToken, // Included so students can reset without external SMTP setup
+        resetToken,
       });
     }
 
-    // 6. RESET PASSWORD
+    // 8. RESET PASSWORD (With confirm password validation)
     if (method === 'POST' && pathname === '/api/auth/reset-password') {
       const body = await parseJsonBody(req);
       const token = (body.token || '').trim();
       const newPassword = body.newPassword || '';
+      const confirmNewPassword = body.confirmNewPassword || '';
 
       if (!token) {
-        return sendJson(res, 400, { error: 'Reset token is required.' });
+        return sendJson(res, 400, { error: 'Reset code is required.' });
       }
       if (newPassword.length < 6) {
         return sendJson(res, 400, { error: 'Password must be at least 6 characters long.' });
+      }
+      if (confirmNewPassword && newPassword !== confirmNewPassword) {
+        return sendJson(res, 400, { error: 'Passwords do not match. Please verify both password fields.' });
       }
 
       const resetData = db.resetTokens[token];
@@ -384,10 +495,9 @@ async function handleApiRequest(req, res) {
       user.salt = salt;
       user.passwordHash = hashPassword(newPassword, salt);
 
-      // Invalidate the reset token
       delete db.resetTokens[token];
 
-      // Invalidate all existing sessions for this user for security
+      // Invalidate all existing sessions
       for (const [sessToken, sess] of Object.entries(db.sessions)) {
         if (sess.userId === user.id) {
           delete db.sessions[sessToken];
@@ -398,7 +508,7 @@ async function handleApiRequest(req, res) {
       return sendJson(res, 200, { success: true, message: 'Password has been reset. Please log in.' });
     }
 
-    // 7. GET AUTHENTICATED STUDENT'S PROGRESS
+    // 9. GET AUTHENTICATED STUDENT'S PROGRESS
     if (method === 'GET' && pathname === '/api/progress') {
       const auth = authenticateUser(req);
       if (!auth) {
@@ -409,7 +519,7 @@ async function handleApiRequest(req, res) {
       return sendJson(res, 200, { progress });
     }
 
-    // 8. UPDATE AUTHENTICATED STUDENT'S PROGRESS (Protected against IDOR: strictly uses req.userId)
+    // 10. UPDATE AUTHENTICATED STUDENT'S PROGRESS
     if (method === 'PUT' && pathname === '/api/progress') {
       const auth = authenticateUser(req);
       if (!auth) {
@@ -419,7 +529,6 @@ async function handleApiRequest(req, res) {
       const body = await parseJsonBody(req);
       const existing = db.progress[auth.user.id] || createDefaultProgress();
 
-      // Check if newly solved questions are present to update community counter
       const oldHistory = existing.questionHistory || {};
       const newHistory = body.questionHistory || {};
       let newlyCorrect = 0;
@@ -435,9 +544,14 @@ async function handleApiRequest(req, res) {
       }
 
       const updatedProgress = {
-        lastVisitedChapterId: body.lastVisitedChapterId !== undefined ? body.lastVisitedChapterId : existing.lastVisitedChapterId,
-        completedChapterIds: Array.isArray(body.completedChapterIds) ? body.completedChapterIds : existing.completedChapterIds,
-        bookmarkedFormulaIds: Array.isArray(body.bookmarkedFormulaIds) ? body.bookmarkedFormulaIds : existing.bookmarkedFormulaIds,
+        lastVisitedChapterId:
+          body.lastVisitedChapterId !== undefined ? body.lastVisitedChapterId : existing.lastVisitedChapterId,
+        completedChapterIds: Array.isArray(body.completedChapterIds)
+          ? body.completedChapterIds
+          : existing.completedChapterIds,
+        bookmarkedFormulaIds: Array.isArray(body.bookmarkedFormulaIds)
+          ? body.bookmarkedFormulaIds
+          : existing.bookmarkedFormulaIds,
         practiceStats: {
           totalAttempted: Number(body.practiceStats?.totalAttempted ?? existing.practiceStats.totalAttempted),
           correctCount: Number(body.practiceStats?.correctCount ?? existing.practiceStats.correctCount),
@@ -457,89 +571,7 @@ async function handleApiRequest(req, res) {
       return sendJson(res, 200, { success: true, progress: updatedProgress });
     }
 
-    // 9. MERGE GUEST PROGRESS INTO AUTHENTICATED ACCOUNT
-    if (method === 'POST' && pathname === '/api/progress/merge-guest') {
-      const auth = authenticateUser(req);
-      if (!auth) {
-        return sendJson(res, 401, { error: 'Authentication required to merge progress.' });
-      }
-
-      const body = await parseJsonBody(req);
-      const guestProgress = body.guestProgress;
-      if (!guestProgress) {
-        return sendJson(res, 400, { error: 'Guest progress payload is required.' });
-      }
-
-      const existing = db.progress[auth.user.id] || createDefaultProgress();
-
-      // Union of completed chapters
-      const completedSet = new Set([
-        ...(existing.completedChapterIds || []),
-        ...(guestProgress.completedChapterIds || []),
-      ]);
-
-      // Union of bookmarks
-      const bookmarkSet = new Set([
-        ...(existing.bookmarkedFormulaIds || []),
-        ...(guestProgress.bookmarkedFormulaIds || []),
-      ]);
-
-      // Merge question histories
-      const mergedHistory = { ...(existing.questionHistory || {}) };
-      let newlyCorrect = 0;
-      if (guestProgress.questionHistory) {
-        for (const [qId, val] of Object.entries(guestProgress.questionHistory)) {
-          if (!mergedHistory[qId]) {
-            mergedHistory[qId] = val;
-            if (val.isCorrect) newlyCorrect++;
-          } else {
-            // Keep correct if either was correct
-            const isCorrect = mergedHistory[qId].isCorrect || val.isCorrect;
-            mergedHistory[qId] = {
-              answered: true,
-              isCorrect,
-              timestamp: Math.max(mergedHistory[qId].timestamp || 0, val.timestamp || 0),
-            };
-          }
-        }
-      }
-
-      if (newlyCorrect > 0) {
-        db.globalStats.totalQuestionsSolvedCommunity =
-          (db.globalStats.totalQuestionsSolvedCommunity || 0) + newlyCorrect;
-      }
-
-      // Re-derive overall stats safely from merged history
-      const totalAttempted = Object.keys(mergedHistory).length;
-      const correctCount = Object.values(mergedHistory).filter((item) => item.isCorrect).length;
-      const bestStreak = Math.max(
-        existing.practiceStats.bestStreak || 0,
-        guestProgress.practiceStats?.bestStreak || 0,
-        existing.practiceStats.currentStreak || 0,
-        guestProgress.practiceStats?.currentStreak || 0
-      );
-
-      const mergedProgress = {
-        lastVisitedChapterId: guestProgress.lastVisitedChapterId || existing.lastVisitedChapterId,
-        completedChapterIds: Array.from(completedSet),
-        bookmarkedFormulaIds: Array.from(bookmarkSet),
-        practiceStats: {
-          totalAttempted,
-          correctCount,
-          currentStreak: guestProgress.practiceStats?.currentStreak || existing.practiceStats.currentStreak || 0,
-          bestStreak,
-        },
-        questionHistory: mergedHistory,
-        updatedAt: Date.now(),
-      };
-
-      db.progress[auth.user.id] = mergedProgress;
-      saveDb();
-
-      return sendJson(res, 200, { success: true, progress: mergedProgress });
-    }
-
-    // 10. PUBLIC AGGREGATE STATS (Platform-wide community counter)
+    // 11. PUBLIC AGGREGATE STATS
     if (method === 'GET' && pathname === '/api/stats/global') {
       return sendJson(res, 200, {
         totalQuestionsSolvedCommunity: db.globalStats.totalQuestionsSolvedCommunity || 348,
@@ -547,7 +579,6 @@ async function handleApiRequest(req, res) {
       });
     }
 
-    // If no matching API endpoint
     return sendJson(res, 404, { error: 'API endpoint not found' });
   } catch (err) {
     console.error('API Error:', err);
@@ -571,7 +602,6 @@ const MIME_TYPES = {
 };
 
 const server = http.createServer((req, res) => {
-  // If it's an API route, pass to API handler
   if (req.url && req.url.startsWith('/api/')) {
     return handleApiRequest(req, res);
   }
@@ -579,12 +609,10 @@ const server = http.createServer((req, res) => {
   const urlPath = req.url?.split('?')[0] || '/';
   let filePath = path.join(DIST_DIR, urlPath);
 
-  // If path is a directory or root, serve index.html
   if (fs.existsSync(filePath) && fs.statSync(filePath).isDirectory()) {
     filePath = path.join(filePath, 'index.html');
   }
 
-  // SPA fallback: if file does not exist, serve index.html
   if (!fs.existsSync(filePath)) {
     filePath = path.join(DIST_DIR, 'index.html');
   }

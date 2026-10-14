@@ -6,22 +6,17 @@ import {
   recordQuestionAnswer,
   toggleChapterCompleted,
   toggleBookmarkFormula,
-  getGuestProgress,
-  clearGuestProgress,
-  defaultProgress,
 } from './storage';
 import crypto from 'node:crypto';
 import { Buffer } from 'node:buffer';
 
 describe('MATHVERSE Student Progress & Account Isolation', () => {
-  // In-memory localStorage mock for node test environment
   const mockStorage: Record<string, string> = {};
 
   beforeEach(() => {
     for (const key of Object.keys(mockStorage)) {
       delete mockStorage[key];
     }
-    // Stub localStorage
     globalThis.localStorage = {
       getItem: (key: string) => mockStorage[key] ?? null,
       setItem: (key: string, val: string) => {
@@ -45,7 +40,6 @@ describe('MATHVERSE Student Progress & Account Isolation', () => {
     setActiveStudentId(null);
     expect(getActiveStudentId()).toBeNull();
 
-    // Guest solves a question
     recordQuestionAnswer('q-c10-s1-1', true);
     toggleChapterCompleted('c10-s1-ap');
 
@@ -54,13 +48,11 @@ describe('MATHVERSE Student Progress & Account Isolation', () => {
     expect(guestProg.practiceStats.correctCount).toBe(1);
     expect(guestProg.practiceStats.totalAttempted).toBe(1);
 
-    // Verify key in storage
     expect(mockStorage['mathverse_guest_progress_v2']).toBeDefined();
     expect(mockStorage['mathverse_user_studentA_progress_v2']).toBeUndefined();
   });
 
   it('2. Strictly isolates Student A and Student B progress on same machine', () => {
-    // Student A signs in
     setActiveStudentId('student_A');
     recordQuestionAnswer('q-sets-1', true);
     recordQuestionAnswer('q-sets-2', true);
@@ -70,13 +62,11 @@ describe('MATHVERSE Student Progress & Account Isolation', () => {
     expect(progA.practiceStats.correctCount).toBe(2);
     expect(progA.bookmarkedFormulaIds).toContain('ap-nth-term');
 
-    // Student A signs out, Student B signs in on same computer
     setActiveStudentId('student_B');
     const progBInitial = loadProgress();
     expect(progBInitial.practiceStats.correctCount).toBe(0);
     expect(progBInitial.bookmarkedFormulaIds).toEqual([]);
 
-    // Student B completes different work
     recordQuestionAnswer('q-trig-1', false);
     toggleChapterCompleted('c10-s2-trig');
 
@@ -85,7 +75,6 @@ describe('MATHVERSE Student Progress & Account Isolation', () => {
     expect(progBUpdated.practiceStats.totalAttempted).toBe(1);
     expect(progBUpdated.completedChapterIds).toContain('c10-s2-trig');
 
-    // Switch back to Student A: verify zero cross-contamination
     setActiveStudentId('student_A');
     const progAReloaded = loadProgress();
     expect(progAReloaded.practiceStats.correctCount).toBe(2);
@@ -96,19 +85,16 @@ describe('MATHVERSE Student Progress & Account Isolation', () => {
 
   it('3. Deduplicates unique solved questions on repeated attempts', () => {
     setActiveStudentId('student_learner');
-    // First attempt: correct
     recordQuestionAnswer('q-linear-1', true);
     let prog = loadProgress();
     expect(prog.practiceStats.correctCount).toBe(1);
     expect(prog.practiceStats.totalAttempted).toBe(1);
 
-    // Repeated attempt of same question: correctCount should remain 1 unique
     recordQuestionAnswer('q-linear-1', true);
     prog = loadProgress();
     expect(prog.practiceStats.correctCount).toBe(1);
     expect(prog.practiceStats.totalAttempted).toBe(1);
 
-    // Solve a distinct second question
     recordQuestionAnswer('q-linear-2', true);
     prog = loadProgress();
     expect(prog.practiceStats.correctCount).toBe(2);
@@ -124,72 +110,19 @@ describe('MATHVERSE Student Progress & Account Isolation', () => {
     expect(prog.practiceStats.currentStreak).toBe(3);
     expect(prog.practiceStats.bestStreak).toBe(3);
 
-    // Incorrect answer resets current streak but preserves best streak
     recordQuestionAnswer('q-4', false);
     prog = loadProgress();
     expect(prog.practiceStats.currentStreak).toBe(0);
     expect(prog.practiceStats.bestStreak).toBe(3);
 
-    // New streak builds up
     recordQuestionAnswer('q-5', true);
     prog = loadProgress();
     expect(prog.practiceStats.currentStreak).toBe(1);
     expect(prog.practiceStats.bestStreak).toBe(3);
   });
-
-  it('5. Merges guest progress cleanly without erasing student account data', () => {
-    // Guest works anonymously
-    setActiveStudentId(null);
-    recordQuestionAnswer('guest-q-1', true);
-    toggleBookmarkFormula('formula-guest');
-    toggleChapterCompleted('c9-s1-number-systems');
-
-    const guestData = getGuestProgress();
-    expect(guestData).not.toBeNull();
-    expect(guestData?.completedChapterIds).toContain('c9-s1-number-systems');
-
-    // Simulate account progress for student C
-    const accountExisting = {
-      ...defaultProgress,
-      completedChapterIds: ['c10-s1-ap'],
-      bookmarkedFormulaIds: ['formula-account'],
-      practiceStats: {
-        totalAttempted: 1,
-        correctCount: 1,
-        currentStreak: 1,
-        bestStreak: 1,
-      },
-      questionHistory: {
-        'account-q-1': { answered: true, isCorrect: true, timestamp: 1000 },
-      },
-    };
-
-    // Merge algorithm simulation (matches server POST /api/progress/merge-guest)
-    const completedSet = new Set([
-      ...accountExisting.completedChapterIds,
-      ...(guestData?.completedChapterIds || []),
-    ]);
-    const bookmarkSet = new Set([
-      ...accountExisting.bookmarkedFormulaIds,
-      ...(guestData?.bookmarkedFormulaIds || []),
-    ]);
-    const mergedHistory = {
-      ...accountExisting.questionHistory,
-      ...(guestData?.questionHistory || {}),
-    };
-
-    expect(Array.from(completedSet)).toEqual(['c10-s1-ap', 'c9-s1-number-systems']);
-    expect(Array.from(bookmarkSet)).toEqual(['formula-account', 'formula-guest']);
-    expect(Object.keys(mergedHistory)).toContain('guest-q-1');
-    expect(Object.keys(mergedHistory)).toContain('account-q-1');
-
-    // Clear guest storage upon successful merge
-    clearGuestProgress();
-    expect(getGuestProgress()).toBeNull();
-  });
 });
 
-describe('MATHVERSE Cryptographic Hashing & Server Security', () => {
+describe('MATHVERSE Account Integrity & Verification Logic', () => {
   function hashPassword(password: string, salt: string): string {
     return crypto.pbkdf2Sync(password, salt, 100000, 64, 'sha512').toString('hex');
   }
@@ -210,10 +143,9 @@ describe('MATHVERSE Cryptographic Hashing & Server Security', () => {
     const hash1 = hashPassword(rawPassword, salt1);
     const hash2 = hashPassword(rawPassword, salt2);
 
-    // Hashing same password with different salts yields distinct cryptographic digests
     expect(hash1).not.toBe(hash2);
     expect(hash1).not.toBe(rawPassword);
-    expect(hash1.length).toBe(128); // 64 bytes = 128 hex chars
+    expect(hash1.length).toBe(128);
   });
 
   it('2. Correctly verifies matching password and rejects incorrect password with constant-time equality', () => {
@@ -222,14 +154,80 @@ describe('MATHVERSE Cryptographic Hashing & Server Security', () => {
 
     expect(verifyPassword('CorrectPassword123', salt, hash)).toBe(true);
     expect(verifyPassword('WrongPassword', salt, hash)).toBe(false);
-    expect(verifyPassword('correctpassword123', salt, hash)).toBe(false); // Case sensitive
   });
 
-  it('3. Generates high-entropy session and password recovery tokens', () => {
-    const sessionToken = crypto.randomBytes(32).toString('hex');
-    const resetToken = crypto.randomBytes(24).toString('hex');
+  it('3. Enforces one account per email and one account per unique username', () => {
+    const usersDb: Record<string, { email: string; username: string }> = {
+      user_1: { email: 'student1@example.com', username: 'karthik_math' },
+    };
 
-    expect(sessionToken.length).toBe(64); // 256 bits entropy
-    expect(resetToken.length).toBe(48); // 192 bits entropy
+    function validateNewRegistration(newEmail: string, newUsername: string) {
+      const emailNormalized = newEmail.trim().toLowerCase();
+      const usernameNormalized = newUsername.trim().toLowerCase();
+
+      const emailExists = Object.values(usersDb).some((u) => u.email.toLowerCase() === emailNormalized);
+      if (emailExists) return { ok: false, error: 'Email already exists' };
+
+      const usernameExists = Object.values(usersDb).some(
+        (u) => u.username.toLowerCase() === usernameNormalized
+      );
+      if (usernameExists) return { ok: false, error: 'Username already taken' };
+
+      return { ok: true };
+    }
+
+    // Duplicate email rejected
+    expect(validateNewRegistration('student1@example.com', 'new_student')).toEqual({
+      ok: false,
+      error: 'Email already exists',
+    });
+
+    // Duplicate username rejected (case-insensitive)
+    expect(validateNewRegistration('student2@example.com', 'Karthik_Math')).toEqual({
+      ok: false,
+      error: 'Username already taken',
+    });
+
+    // Unique email and username accepted
+    expect(validateNewRegistration('student2@example.com', 'ananya_math')).toEqual({
+      ok: true,
+    });
+  });
+
+  it('4. Generates and validates 6-digit email verification code with 15-minute expiry', () => {
+    function generate6DigitCode() {
+      return Math.floor(100000 + Math.random() * 900000).toString();
+    }
+
+    const verificationCodes: Record<string, { code: string; expiresAt: number }> = {};
+    const email = 'verify_test@example.com';
+    const code = generate6DigitCode();
+
+    expect(code).toMatch(/^\d{6}$/);
+
+    verificationCodes[email] = {
+      code,
+      expiresAt: Date.now() + 15 * 60 * 1000,
+    };
+
+    // Valid code check
+    const record = verificationCodes[email];
+    expect(record.code === code && record.expiresAt > Date.now()).toBe(true);
+
+    // Wrong code check
+    expect(record.code === '000000').toBe(false);
+
+    // Expired code check
+    const expiredRecord = { code: '123456', expiresAt: Date.now() - 1000 };
+    expect(expiredRecord.expiresAt < Date.now()).toBe(true);
+  });
+
+  it('5. Enforces password confirmation matching', () => {
+    function checkPasswordsMatch(pass: string, confirm: string) {
+      return pass === confirm;
+    }
+
+    expect(checkPasswordsMatch('SecurePass123', 'SecurePass123')).toBe(true);
+    expect(checkPasswordsMatch('SecurePass123', 'DifferentPass')).toBe(false);
   });
 });

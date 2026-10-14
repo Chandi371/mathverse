@@ -150,6 +150,8 @@ export function App() {
             onSelectChapter={handleSelectChapter}
             selectedClass={selectedClass}
             progress={progress}
+            user={user}
+            onOpenAuth={() => setIsAuthModalOpen(true)}
           />
         )}
 
@@ -160,16 +162,26 @@ export function App() {
             progress={progress}
             onToggleComplete={handleToggleComplete}
             onRecordAnswer={handleRecordAnswer}
+            user={user}
+            onOpenAuth={() => setIsAuthModalOpen(true)}
           />
         )}
 
-        {activeTab === 'labs' && <LabHubView initialLabId={activeLabId} />}
+        {activeTab === 'labs' && (
+          <LabHubView
+            initialLabId={activeLabId}
+            user={user}
+            onOpenAuth={() => setIsAuthModalOpen(true)}
+          />
+        )}
 
         {activeTab === 'formulas' && (
           <FormulaLibrary
             onOpenLab={handleOpenLab}
             bookmarkedIds={progress.bookmarkedFormulaIds}
             onToggleBookmark={handleToggleBookmark}
+            user={user}
+            onOpenAuth={() => setIsAuthModalOpen(true)}
           />
         )}
 

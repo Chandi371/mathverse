@@ -14,8 +14,10 @@ import {
   FileCheck,
   Check,
 } from 'lucide-react';
+import { GuestBanner } from './GuestBanner';
 import type { Chapter } from '../types/curriculum';
 import type { UserProgress } from '../types/progress';
+import type { StudentUser } from '../types/auth';
 
 interface ChapterViewProps {
   chapter: Chapter;
@@ -23,6 +25,8 @@ interface ChapterViewProps {
   progress: UserProgress;
   onToggleComplete: (chapterId: string) => void;
   onRecordAnswer: (questionId: string, isCorrect: boolean) => void;
+  user?: StudentUser | null;
+  onOpenAuth?: () => void;
 }
 
 export const ChapterView: React.FC<ChapterViewProps> = ({
@@ -31,6 +35,8 @@ export const ChapterView: React.FC<ChapterViewProps> = ({
   progress,
   onToggleComplete,
   onRecordAnswer,
+  user = null,
+  onOpenAuth = () => {},
 }) => {
   const [activeSection, setActiveSection] = useState<
     'intro' | 'lab' | 'derivation' | 'memory' | 'examples' | 'practice' | 'revision'
@@ -52,6 +58,8 @@ export const ChapterView: React.FC<ChapterViewProps> = ({
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 pb-24 space-y-6">
+      <GuestBanner user={user} onOpenAuth={onOpenAuth} context="chapter-view" />
+
       {/* Top Header & Breadcrumbs */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <button

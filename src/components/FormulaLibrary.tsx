@@ -13,16 +13,23 @@ import {
   ChevronUp,
 } from 'lucide-react';
 
+import { GuestBanner } from './GuestBanner';
+import type { StudentUser } from '../types/auth';
+
 interface FormulaLibraryProps {
   onOpenLab: (labId: string) => void;
   bookmarkedIds: string[];
   onToggleBookmark: (formulaId: string) => void;
+  user?: StudentUser | null;
+  onOpenAuth?: () => void;
 }
 
 export const FormulaLibrary: React.FC<FormulaLibraryProps> = ({
   onOpenLab,
   bookmarkedIds,
   onToggleBookmark,
+  user = null,
+  onOpenAuth = () => {},
 }) => {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [selectedGrade, setSelectedGrade] = useState<'All' | 9 | 10>('All');
@@ -66,6 +73,8 @@ export const FormulaLibrary: React.FC<FormulaLibraryProps> = ({
 
   return (
     <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-6 pb-24 space-y-4 sm:space-y-6">
+      <GuestBanner user={user} onOpenAuth={onOpenAuth} context="formulas" />
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>

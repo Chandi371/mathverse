@@ -10,11 +10,10 @@ import {
   Award,
   BookOpen,
   Cloud,
-  CloudOff,
   Users,
   ShieldCheck,
-  Sparkles,
 } from 'lucide-react';
+import { GuestBanner } from './GuestBanner';
 import type { UserProgress } from '../types/progress';
 import type { StudentUser } from '../types/auth';
 import { fetchCommunityStats } from '../utils/auth';
@@ -94,30 +93,7 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
           </div>
         </div>
       ) : (
-        <div className="p-4 rounded-3xl bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
-          <div className="flex items-start sm:items-center gap-3">
-            <div className="p-2.5 rounded-2xl bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300 shrink-0 mt-0.5 sm:mt-0">
-              <CloudOff className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-amber-900 dark:text-amber-200 text-sm">
-                  Guest Learning Session (Stored on this Device)
-                </span>
-              </div>
-              <p className="text-xs text-amber-800/80 dark:text-amber-300/80 mt-0.5">
-                Your practice streak and bookmarks are currently saved only in this browser. Create a free student account to keep your progress synced across your phone and computer.
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={onOpenAuth}
-            className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-xs transition flex items-center gap-1.5 shrink-0 self-start sm:self-auto cursor-pointer"
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Save Progress to Cloud</span>
-          </button>
-        </div>
+        <GuestBanner user={user} onOpenAuth={onOpenAuth} context="progress" />
       )}
 
       {/* Header */}

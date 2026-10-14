@@ -2,11 +2,20 @@ import React, { useState } from 'react';
 import { InteractiveLabDispatcher } from './InteractiveLab/InteractiveLabDispatcher';
 import { Sparkles } from 'lucide-react';
 
+import { GuestBanner } from './GuestBanner';
+import type { StudentUser } from '../types/auth';
+
 interface LabHubViewProps {
   initialLabId?: string;
+  user?: StudentUser | null;
+  onOpenAuth?: () => void;
 }
 
-export const LabHubView: React.FC<LabHubViewProps> = ({ initialLabId = 'area-model' }) => {
+export const LabHubView: React.FC<LabHubViewProps> = ({
+  initialLabId = 'area-model',
+  user = null,
+  onOpenAuth = () => {},
+}) => {
   const [activeLabId, setActiveLabId] = useState<string>(initialLabId);
 
   const labList = [
@@ -110,6 +119,8 @@ export const LabHubView: React.FC<LabHubViewProps> = ({ initialLabId = 'area-mod
 
   return (
     <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-6 pb-24 space-y-4 sm:space-y-6">
+      <GuestBanner user={user} onOpenAuth={onOpenAuth} context="labs" />
+
       {/* Header */}
       <div>
         <span className="text-xs uppercase font-bold tracking-wider px-2.5 py-1 rounded-full bg-cyan-100 dark:bg-cyan-950/70 text-cyan-800 dark:text-cyan-300">

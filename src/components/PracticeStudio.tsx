@@ -19,6 +19,7 @@ import {
   PieChart,
   BookOpen,
 } from 'lucide-react';
+import { GuestBanner } from './GuestBanner';
 import type { PracticeQuestion, QuestionDifficulty, ClassGrade, Semester } from '../types/curriculum';
 import type { UserProgress } from '../types/progress';
 import type { StudentUser } from '../types/auth';
@@ -187,6 +188,8 @@ export const PracticeStudio: React.FC<PracticeStudioProps> = ({
 
   return (
     <div className="max-w-4xl mx-auto px-3 sm:px-6 py-4 sm:py-6 pb-24 space-y-4 sm:space-y-6">
+      <GuestBanner user={user || null} onOpenAuth={onOpenAuth || (() => {})} context="practice" />
+
       {/* Header & Overall Stats */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
@@ -199,17 +202,6 @@ export const PracticeStudio: React.FC<PracticeStudioProps> = ({
           <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-0.5">
             Syllabus-wide question registry ensuring balanced topic distribution across all 26 AP SSC chapters.
           </p>
-          {!user && onOpenAuth && (
-            <div className="text-[11px] text-amber-600 dark:text-amber-400 flex items-center gap-1.5 mt-1 font-medium">
-              <span>Guest session: saved locally on this device.</span>
-              <button
-                onClick={onOpenAuth}
-                className="underline font-bold hover:text-amber-700 dark:hover:text-amber-300 cursor-pointer"
-              >
-                Sign in to back up streak to cloud
-              </button>
-            </div>
-          )}
         </div>
 
         {/* Stats Pill: Clearly separating streak, current session score, and lifetime mastery */}

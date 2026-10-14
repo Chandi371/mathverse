@@ -1,18 +1,24 @@
 import React, { useState } from 'react';
 import { allCurriculumChapters } from '../data/curriculumData';
 import { FlaskConical, CheckCircle2, ArrowRight, Search } from 'lucide-react';
+import { GuestBanner } from './GuestBanner';
 import type { UserProgress } from '../types/progress';
+import type { StudentUser } from '../types/auth';
 
 interface ChapterListViewProps {
   onSelectChapter: (id: string) => void;
   selectedClass: 9 | 10 | null;
   progress: UserProgress;
+  user?: StudentUser | null;
+  onOpenAuth?: () => void;
 }
 
 export const ChapterListView: React.FC<ChapterListViewProps> = ({
   onSelectChapter,
   selectedClass,
   progress,
+  user = null,
+  onOpenAuth = () => {},
 }) => {
   const [filterSemester, setFilterSemester] = useState<'All' | 1 | 2>('All');
   const [search, setSearch] = useState('');
@@ -30,6 +36,8 @@ export const ChapterListView: React.FC<ChapterListViewProps> = ({
 
   return (
     <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-6 pb-24 space-y-4 sm:space-y-6">
+      <GuestBanner user={user} onOpenAuth={onOpenAuth} context="chapters" />
+
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <span className="text-xs uppercase font-bold tracking-wider px-2.5 py-1 rounded-full bg-indigo-100 dark:bg-indigo-950/70 text-indigo-800 dark:text-indigo-300">

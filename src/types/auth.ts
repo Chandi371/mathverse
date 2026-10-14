@@ -1,8 +1,10 @@
 export interface StudentUser {
   id: string;
   email: string;
+  username: string;
   name: string;
   classGrade: 9 | 10;
+  emailVerified: boolean;
   createdAt: number;
 }
 
@@ -20,6 +22,9 @@ export interface AuthResponse {
   error?: string;
   message?: string;
   resetToken?: string;
+  requiresVerification?: boolean;
+  verificationCode?: string;
+  email?: string;
 }
 
 export interface GlobalCommunityStats {
