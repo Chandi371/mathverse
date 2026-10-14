@@ -30,31 +30,8 @@ if (dbUrl) {
   }
 }
 
-function purgeDeletedAccounts(data) {
-  if (data.users) {
-    for (const [id, u] of Object.entries(data.users)) {
-      const emailLower = (u.email || '').toLowerCase();
-      const usernameLower = (u.username || u.name || '').toLowerCase();
-      if (
-        emailLower.includes('test') ||
-        usernameLower.includes('test') ||
-        emailLower === 'hanishbg371@gmail.com' ||
-        usernameLower === 'chandi371' ||
-        usernameLower === 'hanish'
-      ) {
-        delete data.users[id];
-        if (data.progress && data.progress[id]) delete data.progress[id];
-        if (data.sessions) {
-          for (const [token, sess] of Object.entries(data.sessions || {})) {
-            if (sess.userId === id) delete data.sessions[token];
-          }
-        }
-      }
-    }
-  }
-  if (data.verificationCodes) {
-    delete data.verificationCodes['hanishbg371@gmail.com'];
-  }
+function purgeDeletedAccounts(_data) {
+  // Retain all student accounts permanently; do not delete accounts on boot
 }
 
 function initDb() {
@@ -65,7 +42,6 @@ function initDb() {
   if (fs.existsSync(DB_FILE)) {
     try {
       const data = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
-      purgeDeletedAccounts(data);
       return {
         users: data.users || {},
         sessions: data.sessions || {},
@@ -95,7 +71,10 @@ function initDb() {
 
 let db = initDb();
 
-function saveDb() {
+let isCloudLoaded = false;
+let cloudLoadPromise = null;
+
+async function saveDbAsync() {
   // 1. Atomic local file save
   try {
     const tmpFile = `${DB_FILE}.tmp.${Date.now()}`;
@@ -107,22 +86,31 @@ function saveDb() {
 
   // 2. Cloud database synchronization (Supabase / PostgreSQL)
   if (pgPool) {
-    pgPool
-      .query(
+    try {
+      await pgPool.query(
         `INSERT INTO mathverse_state (key, data, updated_at)
          VALUES ('main_state', $1, NOW())
          ON CONFLICT (key) DO UPDATE SET data = EXCLUDED.data, updated_at = NOW();`,
         [JSON.stringify(db)]
-      )
-      .catch((err) => {
-        console.error('[DATABASE] Cloud sync error to Supabase/PostgreSQL:', err.message);
-      });
+      );
+    } catch (err) {
+      console.error('[DATABASE] Cloud sync error to Supabase/PostgreSQL:', err.message);
+    }
   }
+}
+
+function saveDb() {
+  saveDbAsync().catch((err) => {
+    console.error('[DATABASE] Async save error:', err);
+  });
 }
 
 // Asynchronously load state from Cloud Database (Supabase) if configured
 async function loadStateFromCloud() {
-  if (!pgPool) return;
+  if (!pgPool) {
+    isCloudLoaded = true;
+    return;
+  }
   try {
     await pgPool.query(`
       CREATE TABLE IF NOT EXISTS mathverse_state (
@@ -134,7 +122,6 @@ async function loadStateFromCloud() {
     const res = await pgPool.query(`SELECT data FROM mathverse_state WHERE key = 'main_state' LIMIT 1;`);
     if (res.rows && res.rows.length > 0 && res.rows[0].data) {
       const cloudData = res.rows[0].data;
-      purgeDeletedAccounts(cloudData);
       db = {
         users: cloudData.users || {},
         sessions: cloudData.sessions || {},
@@ -143,10 +130,21 @@ async function loadStateFromCloud() {
         progress: cloudData.progress || {},
         globalStats: cloudData.globalStats || { totalQuestionsSolvedCommunity: 348 },
       };
-      console.log('[DATABASE] Successfully loaded state from Supabase / Cloud PostgreSQL.');
+      console.log(`[DATABASE] Successfully loaded state from Supabase / Cloud PostgreSQL (${Object.keys(db.users).length} registered students).`);
+    } else {
+      console.log('[DATABASE] Initializing fresh state table in Supabase...');
+      await saveDbAsync();
     }
   } catch (err) {
     console.error('[DATABASE] Failed to load initial state from Supabase:', err.message);
+  } finally {
+    isCloudLoaded = true;
+  }
+}
+
+async function ensureCloudLoaded() {
+  if (!isCloudLoaded && cloudLoadPromise) {
+    await cloudLoadPromise;
   }
 }
 
@@ -499,6 +497,9 @@ async function handleApiRequest(req, res) {
     return;
   }
 
+  // Ensure database state from Supabase Cloud is loaded before serving requests
+  await ensureCloudLoaded();
+
   try {
     // 1. REGISTER (Strict: 1 email = 1 account, 1 username = 1 account, confirm password check, email verification code)
     if (method === 'POST' && pathname === '/api/auth/register') {
@@ -565,22 +566,23 @@ async function handleApiRequest(req, res) {
         attempts: 0,
       };
 
-      saveDb();
+      // Persist to Supabase and local storage immediately
+      await saveDbAsync();
 
       // Dispatch verification code directly to student's email inbox
-      await sendVerificationEmail(email, verificationCode);
-      const isConfigured = hasConfiguredEmailProvider();
+      const emailSent = await sendVerificationEmail(email, verificationCode);
 
       return sendJson(res, 201, {
         success: true,
         requiresVerification: true,
         email,
         username: rawUsername,
-        emailServiceConfigured: isConfigured,
-        sandboxVerificationCode: isConfigured ? undefined : verificationCode,
-        message: isConfigured
+        emailDelivered: emailSent,
+        emailServiceConfigured: emailSent,
+        sandboxVerificationCode: emailSent ? undefined : verificationCode,
+        message: emailSent
           ? `A 6-digit verification code has been dispatched to ${email} from MATHVERSE. Please check your inbox and enter the code below.`
-          : `A 6-digit verification code has been generated for ${email}. Email dispatch is running in server sandbox mode.`,
+          : `Notice: Resend Free Tier delivers only to hanishbg371@gmail.com. For other test accounts, your 6-digit verification code is [ ${verificationCode} ] or click Auto-Fill below.`,
       });
     }
 
@@ -601,7 +603,7 @@ async function handleApiRequest(req, res) {
 
       if (record.code !== code) {
         record.attempts = (record.attempts || 0) + 1;
-        saveDb();
+        await saveDbAsync();
         return sendJson(res, 400, { error: 'Incorrect verification code. Please check and try again.' });
       }
 
@@ -626,7 +628,7 @@ async function handleApiRequest(req, res) {
         db.progress[user.id] = createDefaultProgress();
       }
 
-      saveDb();
+      await saveDbAsync();
 
       return sendJson(
         res,
@@ -665,18 +667,18 @@ async function handleApiRequest(req, res) {
         expiresAt: Date.now() + 15 * 60 * 1000,
         attempts: 0,
       };
-      saveDb();
+      await saveDbAsync();
 
-      await sendVerificationEmail(email, newCode);
-      const isConfigured = hasConfiguredEmailProvider();
+      const emailSent = await sendVerificationEmail(email, newCode);
 
       return sendJson(res, 200, {
         success: true,
-        emailServiceConfigured: isConfigured,
-        sandboxVerificationCode: isConfigured ? undefined : newCode,
-        message: isConfigured
+        emailDelivered: emailSent,
+        emailServiceConfigured: emailSent,
+        sandboxVerificationCode: emailSent ? undefined : newCode,
+        message: emailSent
           ? `A new 6-digit verification code has been dispatched to ${email} from MATHVERSE.`
-          : `A new 6-digit verification code was generated for ${email} in server sandbox mode.`,
+          : `Notice: Resend Free Tier delivers only to hanishbg371@gmail.com. For testing, your verification code is [ ${newCode} ] or click Auto-Fill below.`,
       });
     }
 
@@ -705,19 +707,19 @@ async function handleApiRequest(req, res) {
           expiresAt: Date.now() + 15 * 60 * 1000,
           attempts: 0,
         };
-        saveDb();
+        await saveDbAsync();
 
-        await sendVerificationEmail(email, code);
-        const isEmailConfigured = hasConfiguredEmailProvider();
+        const emailSent = await sendVerificationEmail(email, code);
 
         return sendJson(res, 403, {
-          error: isEmailConfigured
+          error: emailSent
             ? 'Please verify your email address before logging in. A new 6-digit verification code has been dispatched to your email from MATHVERSE.'
-            : 'Please verify your email address before logging in. (Running in Server Sandbox Mode)',
+            : `Please verify your email address before logging in. Your verification code is [ ${code} ].`,
           requiresVerification: true,
           email: user.email,
-          emailServiceConfigured: isEmailConfigured,
-          sandboxVerificationCode: isEmailConfigured ? undefined : code,
+          emailDelivered: emailSent,
+          emailServiceConfigured: emailSent,
+          sandboxVerificationCode: emailSent ? undefined : code,
         });
       }
 
@@ -732,7 +734,7 @@ async function handleApiRequest(req, res) {
         db.progress[user.id] = createDefaultProgress();
       }
 
-      saveDb();
+      await saveDbAsync();
 
       return sendJson(
         res,
@@ -766,7 +768,7 @@ async function handleApiRequest(req, res) {
       const token = getAuthToken(req);
       if (token && db.sessions[token]) {
         delete db.sessions[token];
-        saveDb();
+        await saveDbAsync();
       }
       return sendJson(
         res,
@@ -796,19 +798,19 @@ async function handleApiRequest(req, res) {
         userId: user.id,
         expiresAt: Date.now() + 15 * 60 * 1000,
       };
-      saveDb();
+      await saveDbAsync();
 
       // Dispatch recovery code directly to student's email inbox
-      await sendPasswordResetEmail(email, resetCode);
-      const isConfigured = hasConfiguredEmailProvider();
+      const emailSent = await sendPasswordResetEmail(email, resetCode);
 
       return sendJson(res, 200, {
         success: true,
-        emailServiceConfigured: isConfigured,
-        sandboxResetCode: isConfigured ? undefined : resetCode,
-        message: isConfigured
+        emailDelivered: emailSent,
+        emailServiceConfigured: emailSent,
+        sandboxResetCode: emailSent ? undefined : resetCode,
+        message: emailSent
           ? 'If an account exists with this email, a 6-digit recovery code has been sent from MATHVERSE to your inbox.'
-          : 'If an account exists with this email, a 6-digit recovery code has been generated in server sandbox mode.',
+          : `If an account exists with this email, a 6-digit recovery code has been generated. Your code is [ ${resetCode} ].`,
       });
     }
 
@@ -852,7 +854,7 @@ async function handleApiRequest(req, res) {
         }
       }
 
-      saveDb();
+      await saveDbAsync();
       return sendJson(res, 200, { success: true, message: 'Password has been reset. Please log in.' });
     }
 
@@ -914,7 +916,7 @@ async function handleApiRequest(req, res) {
       };
 
       db.progress[auth.user.id] = updatedProgress;
-      saveDb();
+      await saveDbAsync();
 
       return sendJson(res, 200, { success: true, progress: updatedProgress });
     }
@@ -990,7 +992,9 @@ const server = http.createServer((req, res) => {
   });
 });
 
+cloudLoadPromise = loadStateFromCloud();
+
 server.listen(PORT, async () => {
   console.log(`MATHVERSE full-stack service running on port ${PORT}`);
-  await loadStateFromCloud();
+  await cloudLoadPromise;
 });
