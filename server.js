@@ -940,6 +940,8 @@ async function handleApiRequest(req, res) {
 const MIME_TYPES = {
   '.html': 'text/html',
   '.js': 'text/javascript',
+  '.mjs': 'text/javascript',
+  '.cjs': 'text/javascript',
   '.css': 'text/css',
   '.json': 'application/json',
   '.png': 'image/png',
@@ -1004,6 +1006,8 @@ const server = http.createServer((req, res) => {
           'Accept-Ranges': 'bytes',
           'Content-Length': chunkSize,
           'Content-Type': 'application/pdf',
+          'Content-Disposition': 'inline',
+          'Access-Control-Allow-Origin': '*',
           'Cache-Control': 'public, max-age=86400',
         });
         const fileStream = fs.createReadStream(filePath, { start, end });
@@ -1012,7 +1016,9 @@ const server = http.createServer((req, res) => {
         res.writeHead(200, {
           'Content-Length': totalSize,
           'Content-Type': 'application/pdf',
+          'Content-Disposition': 'inline',
           'Accept-Ranges': 'bytes',
+          'Access-Control-Allow-Origin': '*',
           'Cache-Control': 'public, max-age=86400',
         });
         const fileStream = fs.createReadStream(filePath);
@@ -1032,10 +1038,14 @@ const server = http.createServer((req, res) => {
       return;
     }
     const isHtml = ext === '.html' || ext === '';
+    const isWorker = filePath.includes('worker') || ext === '.mjs';
     const headers = {
       'Content-Type': contentType,
+      'Access-Control-Allow-Origin': '*',
       'Cache-Control': isHtml
         ? 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
+        : isWorker
+        ? 'public, max-age=86400'
         : 'public, max-age=31536000, immutable',
     };
     if (isHtml) {
