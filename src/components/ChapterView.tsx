@@ -13,8 +13,10 @@ import {
   ChevronRight,
   FileCheck,
   Check,
+  Award,
 } from 'lucide-react';
 import { GuestBanner } from './GuestBanner';
+import { getClass10ChapterWeightage } from '../data/textbooksData';
 import type { Chapter } from '../types/curriculum';
 import type { UserProgress } from '../types/progress';
 import type { StudentUser } from '../types/auth';
@@ -43,6 +45,11 @@ export const ChapterView: React.FC<ChapterViewProps> = ({
   >('intro');
 
   const isCompleted = progress.completedChapterIds.includes(chapter.id);
+
+  const weightage =
+    chapter.classGrade === 10
+      ? getClass10ChapterWeightage(chapter.chapterNumber) || getClass10ChapterWeightage(chapter.title)
+      : undefined;
 
   const allSections = [
     { id: 'intro', label: '1. Introduction', icon: BookOpen },
@@ -103,6 +110,174 @@ export const ChapterView: React.FC<ChapterViewProps> = ({
           </p>
         </div>
       </div>
+
+      {/* Official Class 10 Board Exam Marks & Question Breakdown (Visible Inline, No Modal) */}
+      {chapter.classGrade === 10 && weightage && (
+        <div className="bg-gradient-to-br from-amber-500/10 via-indigo-500/5 to-emerald-500/10 dark:from-amber-950/40 dark:via-indigo-950/20 dark:to-emerald-950/30 border border-amber-300/80 dark:border-amber-700/60 rounded-3xl p-5 sm:p-6 shadow-sm space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-10 h-10 rounded-2xl bg-amber-500/20 dark:bg-amber-500/30 text-amber-700 dark:text-amber-300 flex items-center justify-center font-bold">
+                <Award className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-300">
+                    Official SSC 2026–27 Blueprint
+                  </span>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">
+                    Paper Codes 15E &amp; 16E
+                  </span>
+                </div>
+                <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+                  Board Exam Marks &amp; Question Breakdown
+                </h2>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 self-start sm:self-auto">
+              <div className="px-3.5 py-1.5 rounded-2xl bg-amber-500 dark:bg-amber-600 text-slate-950 font-black text-sm sm:text-base shadow-xs flex items-center gap-1.5">
+                <span>Total: {weightage.totalMarksWithChoice} Marks</span>
+                {weightage.choiceMarks > 0 && (
+                  <span className="text-[11px] font-bold opacity-80">
+                    ({weightage.baseMarks}M base + {weightage.choiceMarks}M choice)
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* 4 Question Type Boxes: 1M, 2M, 4M, 8M */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
+            {/* 1 Mark */}
+            <div
+              className={`p-3 sm:p-3.5 rounded-2xl border transition ${
+                weightage.q1mCount > 0
+                  ? 'bg-white dark:bg-slate-900 border-indigo-200 dark:border-indigo-800/80 shadow-xs'
+                  : 'bg-slate-50/60 dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-800/60 opacity-60'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+                  1 Mark (Sec I)
+                </span>
+                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300">
+                  Objective
+                </span>
+              </div>
+              <div className="mt-2 flex items-baseline gap-1.5">
+                <span className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+                  {weightage.q1mCount}
+                </span>
+                <span className="text-xs text-slate-500 dark:text-slate-400">
+                  {weightage.q1mCount === 1 ? 'question' : 'questions'}
+                </span>
+              </div>
+              <p className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 mt-1">
+                = {weightage.q1mCount * 1} Mark{weightage.q1mCount === 1 ? '' : 's'}
+              </p>
+            </div>
+
+            {/* 2 Marks */}
+            <div
+              className={`p-3 sm:p-3.5 rounded-2xl border transition ${
+                weightage.q2mCount > 0
+                  ? 'bg-white dark:bg-slate-900 border-sky-200 dark:border-sky-800/80 shadow-xs'
+                  : 'bg-slate-50/60 dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-800/60 opacity-60'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400">
+                  2 Marks (Sec II)
+                </span>
+                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-sky-50 dark:bg-sky-950/80 text-sky-700 dark:text-sky-300">
+                  Very Short
+                </span>
+              </div>
+              <div className="mt-2 flex items-baseline gap-1.5">
+                <span className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+                  {weightage.q2mCount}
+                </span>
+                <span className="text-xs text-slate-500 dark:text-slate-400">
+                  {weightage.q2mCount === 1 ? 'question' : 'questions'}
+                </span>
+              </div>
+              <p className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 mt-1">
+                = {weightage.q2mCount * 2} Marks
+              </p>
+            </div>
+
+            {/* 4 Marks */}
+            <div
+              className={`p-3 sm:p-3.5 rounded-2xl border transition ${
+                weightage.q4mCount > 0
+                  ? 'bg-white dark:bg-slate-900 border-purple-200 dark:border-purple-800/80 shadow-xs'
+                  : 'bg-slate-50/60 dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-800/60 opacity-60'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">
+                  4 Marks (Sec III)
+                </span>
+                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-purple-50 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300">
+                  Short Ans
+                </span>
+              </div>
+              <div className="mt-2 flex items-baseline gap-1.5">
+                <span className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+                  {weightage.q4mCount}
+                </span>
+                <span className="text-xs text-slate-500 dark:text-slate-400">
+                  {weightage.q4mCount === 1 ? 'question' : 'questions'}
+                </span>
+              </div>
+              <p className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 mt-1">
+                = {weightage.q4mCount * 4} Marks
+              </p>
+            </div>
+
+            {/* 8 Marks */}
+            <div
+              className={`p-3 sm:p-3.5 rounded-2xl border transition ${
+                weightage.q8mCount > 0
+                  ? 'bg-white dark:bg-slate-900 border-amber-300 dark:border-amber-700/80 shadow-xs ring-1 ring-amber-400/20'
+                  : 'bg-slate-50/60 dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-800/60 opacity-60'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">
+                  8 Marks (Sec IV)
+                </span>
+                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300">
+                  Essay
+                </span>
+              </div>
+              <div className="mt-2 flex items-baseline gap-1.5">
+                <span className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+                  {weightage.q8mCount}
+                </span>
+                <span className="text-xs text-slate-500 dark:text-slate-400">
+                  {weightage.q8mCount === 1 ? 'question' : 'questions'}
+                </span>
+              </div>
+              <p className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 mt-1">
+                = {weightage.q8mCount * 8} Marks {weightage.choiceMarks > 0 ? '(Internal Choice)' : ''}
+              </p>
+            </div>
+          </div>
+
+          {/* Blueprint Question Types & Domains summary strip */}
+          <div className="pt-2 border-t border-amber-200/60 dark:border-amber-800/40 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-600 dark:text-slate-400">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="font-semibold text-slate-700 dark:text-slate-300">Pattern:</span>
+              <span>{weightage.questionTypes}</span>
+            </div>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="font-semibold text-slate-700 dark:text-slate-300">Domains Tested:</span>
+              <span className="text-indigo-600 dark:text-indigo-400 font-medium">{weightage.domainsTested}</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Horizontal Learning Navigation Tabs */}
       <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar border-b border-slate-200 dark:border-slate-800">

@@ -5,6 +5,7 @@ import {
   officialChapterWeightage,
   examPaperSections,
   parakhCompetencyDomains,
+  getClass10ChapterWeightage,
 } from '../data/textbooksData';
 
 describe('Official Textbook Library & Exam Resources Data Integrity', () => {
@@ -81,5 +82,34 @@ describe('Official Textbook Library & Exam Resources Data Integrity', () => {
 
     expect(totalPercentage).toBe(100);
     expect(totalMarks).toBe(100);
+  });
+
+  it('should accurately provide 1M, 2M, 4M, and 8M question counts for each Class 10 lesson', () => {
+    // Test helper lookup by number and string
+    const ch1 = getClass10ChapterWeightage(1);
+    expect(ch1).toBeDefined();
+    expect(ch1?.chapter).toBe('Real Numbers');
+    expect(ch1?.totalMarksWithChoice).toBe(9);
+    expect(ch1?.q1mCount).toBe(1);
+    expect(ch1?.q2mCount).toBe(0);
+    expect(ch1?.q4mCount).toBe(0);
+    expect(ch1?.q8mCount).toBe(1);
+
+    const ch3 = getClass10ChapterWeightage('Pair of Linear Equations in Two Variables');
+    expect(ch3).toBeDefined();
+    expect(ch3?.totalMarksWithChoice).toBe(11);
+    expect(ch3?.q1mCount).toBe(1);
+    expect(ch3?.q2mCount).toBe(1);
+    expect(ch3?.q4mCount).toBe(0);
+    expect(ch3?.q8mCount).toBe(1);
+
+    // Sum of question counts across all 14 chapters
+    const total1mQuestions = officialChapterWeightage.reduce((sum, c) => sum + c.q1mCount, 0);
+    const total2mQuestions = officialChapterWeightage.reduce((sum, c) => sum + c.q2mCount, 0);
+    const total4mQuestions = officialChapterWeightage.reduce((sum, c) => sum + c.q4mCount, 0);
+
+    expect(total1mQuestions).toBe(12); // Section I has 12 questions
+    expect(total2mQuestions).toBe(8);  // Section II has 8 questions
+    expect(total4mQuestions).toBe(8);  // Section III has 8 questions
   });
 });

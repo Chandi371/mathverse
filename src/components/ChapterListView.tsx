@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { allCurriculumChapters } from '../data/curriculumData';
-import { FlaskConical, CheckCircle2, ArrowRight, Search } from 'lucide-react';
+import { FlaskConical, CheckCircle2, ArrowRight, Search, Award } from 'lucide-react';
 import { GuestBanner } from './GuestBanner';
+import { getClass10ChapterWeightage } from '../data/textbooksData';
 import type { UserProgress } from '../types/progress';
 import type { StudentUser } from '../types/auth';
 
@@ -116,9 +117,26 @@ export const ChapterListView: React.FC<ChapterListViewProps> = ({
                 <p className="text-xs text-slate-500 mt-1 line-clamp-2 leading-relaxed">
                   {ch.description}
                 </p>
+
+                {/* Class 10 SSC Board Marks Quick Strip */}
+                {ch.classGrade === 10 && (() => {
+                  const weightage = getClass10ChapterWeightage(ch.chapterNumber) || getClass10ChapterWeightage(ch.title);
+                  if (!weightage) return null;
+                  return (
+                    <div className="mt-2.5 px-2.5 py-1.5 rounded-xl bg-amber-500/10 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/60 flex items-center justify-between text-[11px]">
+                      <span className="font-bold text-amber-800 dark:text-amber-300 flex items-center gap-1">
+                        <Award className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                        SSC: {weightage.totalMarksWithChoice}M
+                      </span>
+                      <span className="font-mono text-[10px] text-slate-600 dark:text-slate-400">
+                        1M:{weightage.q1mCount} · 2M:{weightage.q2mCount} · 4M:{weightage.q4mCount} · 8M:{weightage.q8mCount}
+                      </span>
+                    </div>
+                  );
+                })()}
               </div>
 
-              <div className="pt-4 mt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <div className="pt-3 mt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
                 {ch.hasInteractiveLab ? (
                   <span className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 flex items-center gap-1">
                     <FlaskConical className="w-3.5 h-3.5" />

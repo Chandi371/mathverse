@@ -40,6 +40,10 @@ export interface ChapterWeightageItem {
   totalMarksWithChoice: number;
   questionTypes: string;
   domainsTested: string;
+  q1mCount: number;
+  q2mCount: number;
+  q4mCount: number;
+  q8mCount: number;
 }
 
 export interface ExamPatternSection {
@@ -196,6 +200,10 @@ export const officialChapterWeightage: ChapterWeightageItem[] = [
     totalMarksWithChoice: 9,
     questionTypes: '1 Objective (1M) + 1 Essay (8M)',
     domainsTested: 'Awareness, Creativity',
+    q1mCount: 1,
+    q2mCount: 0,
+    q4mCount: 0,
+    q8mCount: 1,
   },
   {
     sNo: 2,
@@ -206,6 +214,10 @@ export const officialChapterWeightage: ChapterWeightageItem[] = [
     totalMarksWithChoice: 7,
     questionTypes: '1 Objective (1M) + 1 Very Short (2M) + 1 Short (4M)',
     domainsTested: 'Creativity, Awareness',
+    q1mCount: 1,
+    q2mCount: 1,
+    q4mCount: 1,
+    q8mCount: 0,
   },
   {
     sNo: 3,
@@ -216,6 +228,10 @@ export const officialChapterWeightage: ChapterWeightageItem[] = [
     totalMarksWithChoice: 11,
     questionTypes: '1 Objective (1M) + 1 Very Short (2M) + 1 Essay (8M)',
     domainsTested: 'Creativity, Awareness',
+    q1mCount: 1,
+    q2mCount: 1,
+    q4mCount: 0,
+    q8mCount: 1,
   },
   {
     sNo: 4,
@@ -226,6 +242,10 @@ export const officialChapterWeightage: ChapterWeightageItem[] = [
     totalMarksWithChoice: 7,
     questionTypes: '1 Objective (1M) + 1 Very Short (2M) + 1 Short (4M)',
     domainsTested: 'Creativity, Sensitivity, Awareness',
+    q1mCount: 1,
+    q2mCount: 1,
+    q4mCount: 1,
+    q8mCount: 0,
   },
   {
     sNo: 5,
@@ -236,6 +256,10 @@ export const officialChapterWeightage: ChapterWeightageItem[] = [
     totalMarksWithChoice: 13,
     questionTypes: '1 Objective (1M) + 1 Short (4M) + [1 Essay (8M) Choice]',
     domainsTested: 'Sensitivity, Awareness, Creativity',
+    q1mCount: 1,
+    q2mCount: 0,
+    q4mCount: 1,
+    q8mCount: 1,
   },
   {
     sNo: 6,
@@ -246,6 +270,10 @@ export const officialChapterWeightage: ChapterWeightageItem[] = [
     totalMarksWithChoice: 11,
     questionTypes: '1 Objective (1M) + 1 Very Short (2M) + [1 Essay (8M) Choice]',
     domainsTested: 'Awareness',
+    q1mCount: 1,
+    q2mCount: 1,
+    q4mCount: 0,
+    q8mCount: 1,
   },
   {
     sNo: 7,
@@ -256,6 +284,10 @@ export const officialChapterWeightage: ChapterWeightageItem[] = [
     totalMarksWithChoice: 10,
     questionTypes: '1 Very Short (2M) + 1 Essay (8M)',
     domainsTested: 'Sensitivity, Awareness',
+    q1mCount: 0,
+    q2mCount: 1,
+    q4mCount: 0,
+    q8mCount: 1,
   },
   {
     sNo: 8,
@@ -266,6 +298,10 @@ export const officialChapterWeightage: ChapterWeightageItem[] = [
     totalMarksWithChoice: 7,
     questionTypes: '1 Objective (1M) + 1 Very Short (2M) + 1 Short (4M)',
     domainsTested: 'Sensitivity, Awareness',
+    q1mCount: 1,
+    q2mCount: 1,
+    q4mCount: 1,
+    q8mCount: 0,
   },
   {
     sNo: 9,
@@ -276,6 +312,10 @@ export const officialChapterWeightage: ChapterWeightageItem[] = [
     totalMarksWithChoice: 11,
     questionTypes: '1 Objective (1M) + 1 Very Short (2M) + [1 Essay (8M) Choice]',
     domainsTested: 'Sensitivity, Creativity, Awareness',
+    q1mCount: 1,
+    q2mCount: 1,
+    q4mCount: 0,
+    q8mCount: 1,
   },
   {
     sNo: 10,
@@ -286,6 +326,10 @@ export const officialChapterWeightage: ChapterWeightageItem[] = [
     totalMarksWithChoice: 7,
     questionTypes: '1 Objective (1M) + 1 Very Short (2M) + 1 Short (4M)',
     domainsTested: 'Creativity, Awareness, Sensitivity',
+    q1mCount: 1,
+    q2mCount: 1,
+    q4mCount: 1,
+    q8mCount: 0,
   },
   {
     sNo: 11,
@@ -296,6 +340,10 @@ export const officialChapterWeightage: ChapterWeightageItem[] = [
     totalMarksWithChoice: 9,
     questionTypes: '1 Objective (1M) + [1 Essay (8M) Choice]',
     domainsTested: 'Awareness, Sensitivity',
+    q1mCount: 1,
+    q2mCount: 0,
+    q4mCount: 0,
+    q8mCount: 1,
   },
   {
     sNo: 12,
@@ -306,6 +354,10 @@ export const officialChapterWeightage: ChapterWeightageItem[] = [
     totalMarksWithChoice: 13,
     questionTypes: '1 Objective (1M) + 1 Short (4M) + [1 Essay (8M) Choice]',
     domainsTested: 'Awareness',
+    q1mCount: 1,
+    q2mCount: 0,
+    q4mCount: 1,
+    q8mCount: 1,
   },
   {
     sNo: 13,
@@ -316,6 +368,10 @@ export const officialChapterWeightage: ChapterWeightageItem[] = [
     totalMarksWithChoice: 12,
     questionTypes: '1 Short (4M) + 1 Essay (8M)',
     domainsTested: 'Awareness',
+    q1mCount: 0,
+    q2mCount: 0,
+    q4mCount: 1,
+    q8mCount: 1,
   },
   {
     sNo: 14,
@@ -326,6 +382,10 @@ export const officialChapterWeightage: ChapterWeightageItem[] = [
     totalMarksWithChoice: 13,
     questionTypes: '1 Objective (1M) + 1 Short (4M) + 1 Essay (8M)',
     domainsTested: 'Sensitivity, Creativity, Awareness',
+    q1mCount: 1,
+    q2mCount: 0,
+    q4mCount: 1,
+    q8mCount: 1,
   },
 ];
 
@@ -394,3 +454,22 @@ export const parakhCompetencyDomains = [
     description: 'Combining multiple mathematical concepts, formulating proof approaches, geometric constructions, and higher-order evaluation.',
   },
 ];
+
+/**
+ * Returns the official SSC Board Exam Chapter-Wise Weightage for a Class 10 chapter.
+ * @param chapterNumber Chapter number (1 to 14) or chapter title string
+ */
+export function getClass10ChapterWeightage(
+  chapterIdentifier: number | string
+): ChapterWeightageItem | undefined {
+  if (typeof chapterIdentifier === 'number') {
+    return officialChapterWeightage.find((item) => item.sNo === chapterIdentifier);
+  }
+  const cleanTitle = chapterIdentifier.toLowerCase().trim();
+  return officialChapterWeightage.find(
+    (item) =>
+      item.chapter.toLowerCase() === cleanTitle ||
+      cleanTitle.includes(item.chapter.toLowerCase()) ||
+      item.chapter.toLowerCase().includes(cleanTitle)
+  );
+}
