@@ -44,8 +44,8 @@ export const PdfReaderModal: React.FC<PdfReaderModalProps> = ({
   const [currentPage, setCurrentPage] = useState<number>(initialPage);
   const [pageInput, setPageInput] = useState<string>(String(initialPage));
   const [numPages, setNumPages] = useState<number>(0);
-  const [scale, setScale] = useState<number>(1.1);
-  const [fitMode, setFitMode] = useState<'custom' | 'width'>('width');
+  const [scale, setScale] = useState<number>(1.0);
+  const [fitMode, setFitMode] = useState<'page' | 'width' | 'custom'>('page');
   const [loading, setLoading] = useState<boolean>(true);
   const [pageRendering, setPageRendering] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -53,6 +53,7 @@ export const PdfReaderModal: React.FC<PdfReaderModalProps> = ({
   const [viewerMode, setViewerMode] = useState<'interactive' | 'native'>('interactive');
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const canvasAreaRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const activeRenderTaskRef = useRef<pdfjsLib.RenderTask | null>(null);
 
@@ -113,15 +114,21 @@ export const PdfReaderModal: React.FC<PdfReaderModalProps> = ({
         const canvas = canvasRef.current;
         if (!canvas) return;
 
-        const container = containerRef.current;
+        const viewerBox = canvasAreaRef.current;
         let targetScale = scale;
 
-        // Auto-fit to width if set
-        if (fitMode === 'width') {
+        // Auto-fit calculations
+        if (viewerBox) {
           const unscaledViewport = page.getViewport({ scale: 1.0 });
-          const availableWidth = container.clientWidth - 48; // padding
-          if (availableWidth > 200) {
-            targetScale = Math.min(2.5, Math.max(0.6, availableWidth / unscaledViewport.width));
+          const availableWidth = Math.max(160, viewerBox.clientWidth - 32);
+          const availableHeight = Math.max(160, viewerBox.clientHeight - 32);
+
+          if (fitMode === 'page') {
+            const scaleW = availableWidth / unscaledViewport.width;
+            const scaleH = availableHeight / unscaledViewport.height;
+            targetScale = Math.min(scaleW, scaleH);
+          } else if (fitMode === 'width') {
+            targetScale = Math.min(2.5, Math.max(0.4, availableWidth / unscaledViewport.width));
           }
         }
 
@@ -168,12 +175,12 @@ export const PdfReaderModal: React.FC<PdfReaderModalProps> = ({
       renderPage(currentPage);
       setPageInput(String(currentPage));
     }
-  }, [loading, pdfDoc, currentPage, renderPage]);
+  }, [loading, pdfDoc, currentPage, fitMode, scale, renderPage]);
 
   // Re-fit on window resize
   useEffect(() => {
     const handleResize = () => {
-      if (fitMode === 'width' && pdfDoc) {
+      if ((fitMode === 'page' || fitMode === 'width') && pdfDoc) {
         renderPage(currentPage);
       }
     };
@@ -239,9 +246,12 @@ export const PdfReaderModal: React.FC<PdfReaderModalProps> = ({
     setScale((prev) => Math.max(0.5, Math.round((prev - 0.2) * 10) / 10));
   };
 
+  const handleFitPage = () => {
+    setFitMode('page');
+  };
+
   const handleFitToWidth = () => {
     setFitMode('width');
-    renderPage(currentPage);
   };
 
   const handleResetZoom = () => {
@@ -321,13 +331,22 @@ export const PdfReaderModal: React.FC<PdfReaderModalProps> = ({
                 <ZoomIn className="w-3.5 h-3.5" />
               </button>
               <button
+                onClick={handleFitPage}
+                title="Fit whole page in view without cutoff"
+                className={`px-2 py-1 rounded-lg text-[10px] font-semibold transition cursor-pointer ${
+                  fitMode === 'page' ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-700/70'
+                }`}
+              >
+                Fit Page
+              </button>
+              <button
                 onClick={handleFitToWidth}
                 title="Fit to page width"
                 className={`px-2 py-1 rounded-lg text-[10px] font-semibold transition cursor-pointer ${
                   fitMode === 'width' ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-700/70'
                 }`}
               >
-                Fit
+                Fit Width
               </button>
               <button
                 onClick={handleResetZoom}
@@ -398,52 +417,57 @@ export const PdfReaderModal: React.FC<PdfReaderModalProps> = ({
           />
         </div>
       ) : (
-        <div className="flex-1 min-h-0 relative overflow-auto rounded-2xl bg-slate-900/60 border border-slate-800/80 flex items-center justify-center p-3 sm:p-6 custom-scrollbar">
-          {loading && (
-            <div className="flex flex-col items-center gap-3 text-slate-400">
-              <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
-              <p className="text-xs font-semibold">Opening textbook &amp; rendering mathematical equations...</p>
-            </div>
-          )}
-
-          {error && (
-            <div className="max-w-md p-6 rounded-2xl bg-slate-900 border border-amber-500/30 text-center space-y-4">
-              <AlertCircle className="w-10 h-10 text-amber-400 mx-auto" />
-              <div>
-                <h3 className="text-base font-bold text-white">Interactive Canvas Notice</h3>
-                <p className="text-xs text-slate-400 mt-1">
-                  Your device had difficulty initializing the interactive worker. You can open the document instantly in the built-in native viewer.
-                </p>
+        <div
+          ref={canvasAreaRef}
+          className="flex-1 min-h-0 relative overflow-auto rounded-2xl bg-slate-900/60 border border-slate-800/80 p-2 sm:p-4 custom-scrollbar"
+        >
+          <div className="min-h-full w-full flex flex-col items-center justify-center">
+            {loading && (
+              <div className="flex flex-col items-center gap-3 text-slate-400 m-auto">
+                <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+                <p className="text-xs font-semibold">Opening textbook &amp; rendering mathematical equations...</p>
               </div>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-2 pt-2">
-                <button
-                  onClick={() => {
-                    setError(null);
-                    setViewerMode('native');
-                  }}
-                  className="w-full sm:w-auto px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-xs font-bold text-white flex items-center justify-center gap-2 transition cursor-pointer shadow-md"
-                >
-                  <BookOpen className="w-4 h-4" />
-                  <span>Open in Native Viewer</span>
-                </button>
-                <button
-                  onClick={handleDownload}
-                  className="w-full sm:w-auto px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 flex items-center justify-center gap-2 transition cursor-pointer"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>Download PDF</span>
-                </button>
-              </div>
-            </div>
-          )}
+            )}
 
-          {/* High-DPI Crisp Canvas */}
-          <canvas
-            ref={canvasRef}
-            className={`shadow-2xl rounded-lg transition-opacity duration-150 mx-auto ${
-              loading || error ? 'hidden' : 'block'
-            } ${pageRendering ? 'opacity-70' : 'opacity-100'}`}
-          />
+            {error && (
+              <div className="max-w-md p-6 rounded-2xl bg-slate-900 border border-amber-500/30 text-center space-y-4 m-auto">
+                <AlertCircle className="w-10 h-10 text-amber-400 mx-auto" />
+                <div>
+                  <h3 className="text-base font-bold text-white">Interactive Canvas Notice</h3>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Your device had difficulty initializing the interactive worker. You can open the document instantly in the built-in native viewer.
+                  </p>
+                </div>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-2 pt-2">
+                  <button
+                    onClick={() => {
+                      setError(null);
+                      setViewerMode('native');
+                    }}
+                    className="w-full sm:w-auto px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-xs font-bold text-white flex items-center justify-center gap-2 transition cursor-pointer shadow-md"
+                  >
+                    <BookOpen className="w-4 h-4" />
+                    <span>Open in Native Viewer</span>
+                  </button>
+                  <button
+                    onClick={handleDownload}
+                    className="w-full sm:w-auto px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 flex items-center justify-center gap-2 transition cursor-pointer"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Download PDF</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* High-DPI Crisp Canvas centered with m-auto so scroll from top is never clipped */}
+            <canvas
+              ref={canvasRef}
+              className={`shadow-2xl rounded-lg transition-opacity duration-150 m-auto ${
+                loading || error ? 'hidden' : 'block'
+              } ${pageRendering ? 'opacity-70' : 'opacity-100'}`}
+            />
+          </div>
 
           {/* Page Rendering Overlay Indicator */}
           {pageRendering && !loading && (
