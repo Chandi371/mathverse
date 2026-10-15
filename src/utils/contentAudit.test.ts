@@ -47,6 +47,29 @@ describe('MATHVERSE Mathematical Content Audit & Remediation Suite', () => {
         expect(chapter.vocabulary.length).toBeGreaterThan(0);
       });
     });
+
+    it('every chapter has a valid interactive lab linked and registered', () => {
+      const validLabIds = new Set([
+        'area-model',
+        'trig-triangle',
+        'arithmetic-progression',
+        'herons-formula',
+        'coordinate-geometry',
+        'quadratic-parabola',
+        'probability-sim',
+        'circle-area',
+        'cylinder-net',
+        'linear-equations',
+        'similar-triangles',
+        'statistics-lab',
+      ]);
+
+      chaptersData.forEach((chapter) => {
+        expect(chapter.labId).toBeDefined();
+        expect(validLabIds.has(chapter.labId!)).toBe(true);
+        expect(chapter.labTitle).toBeTruthy();
+      });
+    });
   });
 
   describe('2. Comprehensive Mathematical Content per Chapter (Formulas, Derivations, Examples, Practice)', () => {

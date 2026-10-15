@@ -51,18 +51,23 @@ export const ChapterView: React.FC<ChapterViewProps> = ({
       ? getClass10ChapterWeightage(chapter.chapterNumber) || getClass10ChapterWeightage(chapter.title)
       : undefined;
 
-  const allSections = [
-    { id: 'intro', label: '1. Introduction', icon: BookOpen },
-    { id: 'formulas', label: `2. Key Formulas (${chapter.keyFormulas.length})`, icon: Sigma },
-    { id: 'lab', label: '3. Interactive Lab', icon: FlaskConical, show: Boolean(chapter.labId) },
-    { id: 'derivation', label: '4. Formula Origins', icon: BookOpen },
-    { id: 'memory', label: '5. Memory Lab', icon: Brain },
-    { id: 'examples', label: `6. Worked Examples (${chapter.workedExamples.length})`, icon: FileCheck },
-    { id: 'practice', label: `7. Practice Studio (${chapter.practiceQuestions.length})`, icon: CheckCircle2 },
-    { id: 'revision', label: '8. Revision Recap', icon: Lightbulb },
+  const rawSections = [
+    { id: 'intro', title: 'Introduction', icon: BookOpen },
+    { id: 'formulas', title: `Key Formulas (${chapter.keyFormulas.length})`, icon: Sigma },
+    { id: 'lab', title: 'Interactive Lab', icon: FlaskConical, show: Boolean(chapter.labId) },
+    { id: 'derivation', title: 'Formula Origins', icon: BookOpen },
+    { id: 'memory', title: 'Memory Lab', icon: Brain },
+    { id: 'examples', title: `Worked Examples (${chapter.workedExamples.length})`, icon: FileCheck },
+    { id: 'practice', title: `Practice Studio (${chapter.practiceQuestions.length})`, icon: CheckCircle2 },
+    { id: 'revision', title: 'Revision Recap', icon: Lightbulb },
   ] as const;
 
-  const sections = allSections.filter((sec) => ('show' in sec ? sec.show : true));
+  const sections = rawSections
+    .filter((sec) => ('show' in sec ? sec.show : true))
+    .map((sec, idx) => ({
+      ...sec,
+      label: `${idx + 1}. ${sec.title}`,
+    }));
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 pb-24 space-y-6">

@@ -72,7 +72,8 @@ export const allCurriculumChapters: ChapterMeta[] = [
     title: "Introduction to Euclid's Geometry",
     topicCategory: 'Geometry',
     description: 'Axioms, postulates, definitions, and Euclid’s fifth parallel postulate.',
-    hasInteractiveLab: false,
+    hasInteractiveLab: true,
+    labId: 'linear-equations',
   },
   {
     id: 'c9-s1-ch6',
@@ -108,7 +109,8 @@ export const allCurriculumChapters: ChapterMeta[] = [
     title: 'Quadrilaterals',
     topicCategory: 'Geometry',
     description: 'Properties of parallelograms, mid-point theorem, and classification.',
-    hasInteractiveLab: false,
+    hasInteractiveLab: true,
+    labId: 'similar-triangles',
   },
   {
     id: 'c9-s2-ch9',
@@ -166,7 +168,8 @@ export const allCurriculumChapters: ChapterMeta[] = [
     title: 'Real Numbers',
     topicCategory: 'Number Systems',
     description: 'Fundamental Theorem of Arithmetic, irrationality of √2 and √5, HCF-LCM relations.',
-    hasInteractiveLab: false,
+    hasInteractiveLab: true,
+    labId: 'area-model',
   },
   {
     id: 'c10-s1-ch2',
@@ -268,7 +271,8 @@ export const allCurriculumChapters: ChapterMeta[] = [
     title: 'Circles',
     topicCategory: 'Geometry',
     description: 'Tangents to a circle, radius perpendicular to tangent, and lengths of tangents from external point.',
-    hasInteractiveLab: false,
+    hasInteractiveLab: true,
+    labId: 'circle-area',
   },
   {
     id: 'c10-s2-ch11',

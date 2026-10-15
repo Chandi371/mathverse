@@ -307,7 +307,9 @@ export const class10Chapters: Chapter[] = [
         "Applying HCF × LCM = a × b × c for 3 numbers (invalid!).",
         "Not simplifying fraction before checking denominator powers of 2 and 5."
       ]
-    }
+    },
+    "labId": "area-model",
+    "labTitle": "Real Numbers"
   },
   {
     "id": "c10-s1-ch2",
@@ -609,7 +611,9 @@ export const class10Chapters: Chapter[] = [
         "Missing the negative sign in α + β = -b/a.",
         "Confusing zeroes of polynomial with factors (if root is α, factor is (x - α))."
       ]
-    }
+    },
+    "labId": "quadratic-parabola",
+    "labTitle": "Polynomials"
   },
   {
     "id": "c10-s1-ch3",
@@ -891,7 +895,9 @@ export const class10Chapters: Chapter[] = [
       "commonTraps": [
         "Having one equation with constant on LHS and other on RHS when forming ratios."
       ]
-    }
+    },
+    "labId": "linear-equations",
+    "labTitle": "Pair of Linear Equations in Two Variables"
   },
   {
     "id": "c10-s1-quad",
@@ -1182,7 +1188,9 @@ export const class10Chapters: Chapter[] = [
         "Forgetting division by 2a across the ENTIRE numerator (including -b).",
         "Losing negative signs inside (-b) when b itself is negative: -(-7) = +7."
       ]
-    }
+    },
+    "labId": "quadratic-parabola",
+    "labTitle": "Quadratic Equations"
   },
   {
     "id": "c10-s1-ap",
@@ -1497,7 +1505,9 @@ export const class10Chapters: Chapter[] = [
       "commonTraps": [
         "Taking d as positive when the sequence is decreasing (e.g. 10, 7, 4 has d = -3, NOT +3!)."
       ]
-    }
+    },
+    "labId": "arithmetic-progression",
+    "labTitle": "Arithmetic Progressions"
   },
   {
     "id": "c10-s1-ch6",
@@ -1798,7 +1808,9 @@ export const class10Chapters: Chapter[] = [
       "commonTraps": [
         "Confusing AD/DB with AD/AB when finding DE/BC: DE/BC = AD/AB!"
       ]
-    }
+    },
+    "labId": "similar-triangles",
+    "labTitle": "Triangles"
   },
   {
     "id": "c10-s1-ch7",
@@ -2085,7 +2097,9 @@ export const class10Chapters: Chapter[] = [
       "commonTraps": [
         "Swapping m₁ with x₁ instead of x₂ in section formula: m₁ multiplies x₂!"
       ]
-    }
+    },
+    "labId": "coordinate-geometry",
+    "labTitle": "Coordinate Geometry"
   },
   {
     "id": "c10-s2-trig",
@@ -2386,7 +2400,9 @@ export const class10Chapters: Chapter[] = [
       "commonTraps": [
         "Writing sec²θ + tan²θ = 1; it is sec²θ MINUS tan²θ = 1."
       ]
-    }
+    },
+    "labId": "trig-triangle",
+    "labTitle": "Introduction to Trigonometry"
   },
   {
     "id": "c10-s2-ch9",
@@ -2667,7 +2683,9 @@ export const class10Chapters: Chapter[] = [
       "commonTraps": [
         "Measuring angle of depression from the vertical wall instead of horizontal sightline."
       ]
-    }
+    },
+    "labId": "trig-triangle",
+    "labTitle": "Some Applications of Trigonometry"
   },
   {
     "id": "c10-s2-ch10",
@@ -2956,7 +2974,9 @@ export const class10Chapters: Chapter[] = [
       "commonTraps": [
         "Assuming radius and tangent meet at an acute angle; they ALWAYS meet at 90°."
       ]
-    }
+    },
+    "labId": "circle-area",
+    "labTitle": "Circles"
   },
   {
     "id": "c10-s2-ch11",
@@ -3237,7 +3257,9 @@ export const class10Chapters: Chapter[] = [
       "commonTraps": [
         "Confusing sector (includes two straight radii) with segment (bounded by chord)."
       ]
-    }
+    },
+    "labId": "circle-area",
+    "labTitle": "Areas Related to Circles"
   },
   {
     "id": "c10-s2-ch12",
@@ -3501,7 +3523,9 @@ export const class10Chapters: Chapter[] = [
       "commonTraps": [
         "Including internal contact faces in surface area calculations."
       ]
-    }
+    },
+    "labId": "cylinder-net",
+    "labTitle": "Surface Areas and Volumes"
   },
   {
     "id": "c10-s2-ch13",
@@ -3829,7 +3853,9 @@ export const class10Chapters: Chapter[] = [
         "Taking cf from the median class instead of the PRECEDING class.",
         "Subtracting limits in reverse when computing class size h."
       ]
-    }
+    },
+    "labId": "statistics-lab",
+    "labTitle": "Statistics"
   },
   {
     "id": "c10-s2-prob",
@@ -4118,6 +4144,8 @@ export const class10Chapters: Chapter[] = [
         "Counting ace as a face card.",
         "Writing probability greater than 1 or negative."
       ]
-    }
+    },
+    "labId": "probability-sim",
+    "labTitle": "Probability"
   }
 ];

@@ -352,7 +352,9 @@ export const class9Chapters: Chapter[] = [
         "Assuming π equals 22/7 exactly; 22/7 is only an approximation. π is irrational, while 22/7 is rational.",
         "Forgetting to simplify fractions before checking terminating denominator condition."
       ]
-    }
+    },
+    "labId": "area-model",
+    "labTitle": "Number Systems"
   },
   {
     "id": "c9-s1-poly",
@@ -695,7 +697,9 @@ export const class9Chapters: Chapter[] = [
         "Confusing dividing by (x + a) with substituting +a; for (x + a), substitute x = -a into p(x).",
         "Forgetting cross-term 2xy when squaring binomials: (x + y)² ≠ x² + y²."
       ]
-    }
+    },
+    "labId": "area-model",
+    "labTitle": "Polynomials & Algebraic Identities"
   },
   {
     "id": "c9-s1-ch3",
@@ -977,7 +981,9 @@ export const class9Chapters: Chapter[] = [
         "Writing negative distance from axes: distance is always positive magnitude.",
         "Assigning boundary points on axes to quadrants; axis points do not belong to any quadrant."
       ]
-    }
+    },
+    "labId": "coordinate-geometry",
+    "labTitle": "Coordinate Geometry"
   },
   {
     "id": "c9-s1-ch4",
@@ -1251,7 +1257,9 @@ export const class9Chapters: Chapter[] = [
         "Thinking a linear equation has only 1 solution (true only for 1 variable equations).",
         "Confusing the equation of x-axis (y = 0) with y-axis (x = 0)."
       ]
-    }
+    },
+    "labId": "linear-equations",
+    "labTitle": "Linear Equations in Two Variables"
   },
   {
     "id": "c9-s1-ch5",
@@ -1506,7 +1514,9 @@ export const class9Chapters: Chapter[] = [
       "commonTraps": [
         "Confusing Euclid’s axioms with theorems (theorems require proof; axioms do not)."
       ]
-    }
+    },
+    "labId": "linear-equations",
+    "labTitle": "Introduction to Euclid's Geometry"
   },
   {
     "id": "c9-s1-ch6",
@@ -1795,7 +1805,9 @@ export const class9Chapters: Chapter[] = [
       "commonTraps": [
         "Assuming alternate angles are equal when lines are NOT given as parallel."
       ]
-    }
+    },
+    "labId": "similar-triangles",
+    "labTitle": "Lines and Angles"
   },
   {
     "id": "c9-s2-ch7",
@@ -2107,7 +2119,9 @@ export const class9Chapters: Chapter[] = [
       "commonTraps": [
         "Assuming SSA (two sides and a non-included angle) is a valid congruence test."
       ]
-    }
+    },
+    "labId": "similar-triangles",
+    "labTitle": "Triangles"
   },
   {
     "id": "c9-s2-ch8",
@@ -2402,7 +2416,9 @@ export const class9Chapters: Chapter[] = [
       "commonTraps": [
         "Assuming diagonals of every parallelogram are equal (only true for rectangles and squares)."
       ]
-    }
+    },
+    "labId": "similar-triangles",
+    "labTitle": "Quadrilaterals"
   },
   {
     "id": "c9-s2-ch9",
@@ -2668,7 +2684,9 @@ export const class9Chapters: Chapter[] = [
       "commonTraps": [
         "Forgetting that angles in the same segment must be on the SAME side of the chord."
       ]
-    }
+    },
+    "labId": "circle-area",
+    "labTitle": "Circles"
   },
   {
     "id": "c9-s2-heron",
@@ -2940,7 +2958,9 @@ export const class9Chapters: Chapter[] = [
       "commonTraps": [
         "Forgetting to take square root at the final step."
       ]
-    }
+    },
+    "labId": "herons-formula",
+    "labTitle": "Heron's Formula"
   },
   {
     "id": "c9-s2-ch11",
@@ -3192,7 +3212,9 @@ export const class9Chapters: Chapter[] = [
         "Using vertical height h instead of slant height l in cone CSA.",
         "Forgetting that hemisphere TSA is 3πr², not 2πr²."
       ]
-    }
+    },
+    "labId": "cylinder-net",
+    "labTitle": "Surface Areas and Volumes"
   },
   {
     "id": "c9-s2-ch12",
@@ -3447,6 +3469,8 @@ export const class9Chapters: Chapter[] = [
       "commonTraps": [
         "Leaving gaps between bars in a continuous histogram."
       ]
-    }
+    },
+    "labId": "statistics-lab",
+    "labTitle": "Statistics"
   }
 ];
