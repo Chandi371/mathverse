@@ -41,7 +41,7 @@ export const ChapterView: React.FC<ChapterViewProps> = ({
   onOpenAuth = () => {},
 }) => {
   const [activeSection, setActiveSection] = useState<
-    'intro' | 'lab' | 'derivation' | 'memory' | 'examples' | 'practice' | 'revision'
+    'intro' | 'formulas' | 'lab' | 'derivation' | 'memory' | 'examples' | 'practice' | 'revision'
   >('intro');
 
   const isCompleted = progress.completedChapterIds.includes(chapter.id);
@@ -53,12 +53,13 @@ export const ChapterView: React.FC<ChapterViewProps> = ({
 
   const allSections = [
     { id: 'intro', label: '1. Introduction', icon: BookOpen },
-    { id: 'lab', label: '2. Interactive Lab', icon: FlaskConical, show: Boolean(chapter.labId) },
-    { id: 'derivation', label: '3. Formula Origins', icon: Sigma },
-    { id: 'memory', label: '4. Memory Lab', icon: Brain },
-    { id: 'examples', label: '5. Worked Examples', icon: FileCheck },
-    { id: 'practice', label: '6. Practice Studio', icon: CheckCircle2 },
-    { id: 'revision', label: '7. Revision Recap', icon: Lightbulb },
+    { id: 'formulas', label: `2. Key Formulas (${chapter.keyFormulas.length})`, icon: Sigma },
+    { id: 'lab', label: '3. Interactive Lab', icon: FlaskConical, show: Boolean(chapter.labId) },
+    { id: 'derivation', label: '4. Formula Origins', icon: BookOpen },
+    { id: 'memory', label: '5. Memory Lab', icon: Brain },
+    { id: 'examples', label: `6. Worked Examples (${chapter.workedExamples.length})`, icon: FileCheck },
+    { id: 'practice', label: `7. Practice Studio (${chapter.practiceQuestions.length})`, icon: CheckCircle2 },
+    { id: 'revision', label: '8. Revision Recap', icon: Lightbulb },
   ] as const;
 
   const sections = allSections.filter((sec) => ('show' in sec ? sec.show : true));
@@ -356,20 +357,119 @@ export const ChapterView: React.FC<ChapterViewProps> = ({
 
             <div className="flex justify-end pt-1">
               <button
-                onClick={() => setActiveSection(chapter.labId ? 'lab' : 'derivation')}
+                onClick={() => setActiveSection('formulas')}
                 className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-5 py-3 sm:py-2.5 rounded-xl bg-indigo-600 text-white text-xs sm:text-sm font-semibold hover:bg-indigo-700 shadow-sm transition active:scale-[0.98]"
               >
-                <span>{chapter.labId ? 'Proceed to Interactive Lab' : 'Explore Formula Origins'}</span>
+                <span>Explore Key Formulas ({chapter.keyFormulas.length})</span>
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>
           </div>
         )}
 
-        {/* 2. INTERACTIVE LAB */}
-        {activeSection === 'lab' && chapter.labId && (
+        {/* 2. KEY FORMULAS & IDENTITIES */}
+        {activeSection === 'formulas' && (
           <div className="space-y-6 animate-in fade-in duration-150">
-            <InteractiveLabDispatcher labId={chapter.labId} />
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 sm:p-7 shadow-sm space-y-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-4">
+                <div>
+                  <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider block">
+                    Authoritative Formula Reference
+                  </span>
+                  <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white mt-1">
+                    Key Formulas, Theorems &amp; Identities
+                  </h2>
+                  <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-1">
+                    Prescribed AP SCERT textbook formulas for {chapter.title} with variables, conditions, and worked applications.
+                  </p>
+                </div>
+                <div className="self-start sm:self-auto px-3 py-1 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 text-xs font-bold">
+                  {chapter.keyFormulas.length} Prescribed Formulas
+                </div>
+              </div>
+
+              <div className="space-y-5">
+                {chapter.keyFormulas.map((formula, fIdx) => (
+                  <div
+                    key={formula.id || fIdx}
+                    className="p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-850 space-y-4 hover:border-indigo-200 dark:hover:border-indigo-900/60 transition"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                          {formula.category} • Formula {fIdx + 1}
+                        </span>
+                        <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mt-1">
+                          {formula.name}
+                        </h3>
+                      </div>
+                      {formula.conditions && (
+                        <div className="px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-[11px] text-amber-800 dark:text-amber-300 font-medium">
+                          <strong>Condition:</strong> {formula.conditions}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Formula LaTeX Display */}
+                    <div className="p-3.5 sm:p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700 shadow-xs text-center font-mono">
+                      <MathView math={formula.latex} block />
+                    </div>
+
+                    <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                      {formula.description}
+                    </p>
+
+                    {/* Variables & Meanings */}
+                    {formula.variables && formula.variables.length > 0 && (
+                      <div className="bg-white/80 dark:bg-slate-900/80 rounded-xl p-3 border border-slate-200/70 dark:border-slate-800 space-y-1.5">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
+                          Variables &amp; Notation:
+                        </span>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                          {formula.variables.map((v, vIdx) => (
+                            <div key={vIdx} className="flex items-center gap-2">
+                              <span className="px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 font-mono font-bold text-[11px]">
+                                {v.symbol}
+                              </span>
+                              <span className="text-slate-700 dark:text-slate-300">{v.meaning}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* When To Use */}
+                    {formula.whenToUse && (
+                      <div className="text-xs text-indigo-900 dark:text-indigo-200 bg-indigo-50/70 dark:bg-indigo-950/40 p-2.5 rounded-xl border border-indigo-200/70 dark:border-indigo-900/50">
+                        <strong>When to Use:</strong> {formula.whenToUse}
+                      </div>
+                    )}
+
+                    {/* Mini worked example if present */}
+                    {formula.workedExample && (
+                      <div className="bg-emerald-50/50 dark:bg-emerald-950/30 rounded-xl p-3 border border-emerald-200/70 dark:border-emerald-900/50 text-xs space-y-1">
+                        <span className="font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-wider text-[10px] block">
+                          Quick Application:
+                        </span>
+                        <div className="font-semibold text-slate-800 dark:text-slate-200">
+                          {formula.workedExample.problem}
+                        </div>
+                        <div className="text-slate-600 dark:text-slate-300">
+                          {formula.workedExample.solution}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Mnemonic Hook if present */}
+                    {formula.mnemonic && (
+                      <div className="text-xs text-purple-900 dark:text-purple-200 bg-purple-50/60 dark:bg-purple-950/40 p-2.5 rounded-xl border border-purple-200/70 dark:border-purple-900/50">
+                        💡 <strong>Memory Hook:</strong> {formula.mnemonic}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
 
             <div className="flex justify-between items-center pt-2">
               <button
@@ -377,6 +477,29 @@ export const ChapterView: React.FC<ChapterViewProps> = ({
                 className="text-xs font-semibold text-slate-500 hover:underline"
               >
                 ← Back to Intro
+              </button>
+              <button
+                onClick={() => setActiveSection(chapter.labId ? 'lab' : 'derivation')}
+                className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-xs sm:text-sm font-semibold hover:bg-indigo-700 shadow-sm transition"
+              >
+                <span>{chapter.labId ? 'Explore Interactive Lab' : 'Explore Formula Origins'}</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* 3. INTERACTIVE LAB */}
+        {activeSection === 'lab' && chapter.labId && (
+          <div className="space-y-6 animate-in fade-in duration-150">
+            <InteractiveLabDispatcher labId={chapter.labId} />
+
+            <div className="flex justify-between items-center pt-2">
+              <button
+                onClick={() => setActiveSection('formulas')}
+                className="text-xs font-semibold text-slate-500 hover:underline"
+              >
+                ← Back to Formulas
               </button>
               <button
                 onClick={() => setActiveSection('derivation')}
@@ -452,10 +575,10 @@ export const ChapterView: React.FC<ChapterViewProps> = ({
 
             <div className="flex justify-between items-center pt-2">
               <button
-                onClick={() => setActiveSection(chapter.labId ? 'lab' : 'intro')}
+                onClick={() => setActiveSection(chapter.labId ? 'lab' : 'formulas')}
                 className="text-xs font-semibold text-slate-500 hover:underline"
               >
-                ← Back to {chapter.labId ? 'Lab' : 'Intro'}
+                ← Back to {chapter.labId ? 'Lab' : 'Formulas'}
               </button>
               <button
                 onClick={() => setActiveSection('memory')}

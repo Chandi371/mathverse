@@ -1,6 +1,8 @@
 import type { FormulaItem } from '../types/curriculum';
+import { class9Chapters } from './chapters/class9';
+import { class10Chapters } from './chapters/class10';
 
-export const allFormulasData: FormulaItem[] = [
+const baseFormulasData: FormulaItem[] = [
   // ==========================================
   // CLASS 9 — SEMESTER 1
   // ==========================================
@@ -1422,3 +1424,22 @@ export const allFormulasData: FormulaItem[] = [
     },
   },
 ];
+
+const chapterKeyFormulas: FormulaItem[] = [
+  ...class9Chapters.flatMap((c) => c.keyFormulas || []),
+  ...class10Chapters.flatMap((c) => c.keyFormulas || []),
+];
+
+const formulaMap = new Map<string, FormulaItem>();
+for (const f of baseFormulasData) {
+  formulaMap.set(f.id, f);
+}
+for (const f of chapterKeyFormulas) {
+  if (formulaMap.has(f.id)) {
+    formulaMap.set(f.id, { ...formulaMap.get(f.id)!, ...f });
+  } else {
+    formulaMap.set(f.id, f);
+  }
+}
+
+export const allFormulasData: FormulaItem[] = Array.from(formulaMap.values());
