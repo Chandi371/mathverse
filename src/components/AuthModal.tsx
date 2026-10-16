@@ -6,19 +6,14 @@ import {
   Lock,
   GraduationCap,
   ArrowRight,
-  CheckCircle,
   AlertCircle,
   KeyRound,
   ShieldCheck,
   Check,
-  RotateCw,
 } from 'lucide-react';
 import {
   registerStudent,
-  verifyEmail,
-  resendVerificationCode,
   loginStudent,
-  requestPasswordReset,
   submitPasswordReset,
 } from '../utils/auth';
 import { setActiveStudentId, saveProgress } from '../utils/storage';
@@ -31,7 +26,7 @@ interface AuthModalProps {
   onAuthSuccess: (user: StudentUser, progress: UserProgress) => void;
 }
 
-type AuthMode = 'login' | 'register' | 'verify-email' | 'forgot' | 'reset-code';
+type AuthMode = 'login' | 'register' | 'forgot';
 
 export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess }) => {
   const [mode, setMode] = useState<AuthMode>('login');
@@ -41,15 +36,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
   const [confirmPassword, setConfirmPassword] = useState('');
   const [classGrade, setClassGrade] = useState<9 | 10>(10);
 
-  // Email verification state (Code is hidden from browser inspection and sent to student inbox)
-  const [verificationCode, setVerificationCode] = useState('');
-
   // Password reset state
-  const [resetToken, setResetToken] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
-  const [sandboxCode, setSandboxCode] = useState<string | null>(null);
-  const [sandboxResetCode, setSandboxResetCode] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -60,8 +49,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
   const resetMessages = () => {
     setError(null);
     setInfoMessage(null);
-    setSandboxCode(null);
-    setSandboxResetCode(null);
   };
 
   const handleSwitchMode = (newMode: AuthMode) => {
@@ -80,15 +67,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
       onAuthSuccess(user, progress);
       onClose();
     } catch (err: any) {
-      if (err.data?.requiresVerification) {
-        setInfoMessage(err.message || 'Please verify your email address to log in.');
-        if (err.data?.sandboxVerificationCode) {
-          setSandboxCode(err.data.sandboxVerificationCode);
-        }
-        setMode('verify-email');
-      } else {
-        setError(err.message || 'Login failed. Please check your credentials.');
-      }
+      setError(err.message || 'Login failed. Please check your email and password.');
     } finally {
       setLoading(false);
     }
@@ -106,71 +85,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
     setLoading(true);
     try {
       const res = await registerStudent(email, username, password, confirmPassword, classGrade);
-      if (res.requiresVerification) {
-        setInfoMessage(res.message || 'Verification code sent.');
-        if (res.sandboxVerificationCode) {
-          setSandboxCode(res.sandboxVerificationCode);
-        }
-        setMode('verify-email');
-      } else if (res.user && res.token) {
+      if (res.user && res.token) {
         setActiveStudentId(res.user.id);
         saveProgress(res.progress);
         onAuthSuccess(res.user, res.progress);
         onClose();
+      } else {
+        setInfoMessage(res.message || 'Account created! You can now sign in.');
+        setMode('login');
       }
     } catch (err: any) {
-      setError(err.message || 'Registration failed.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVerifyEmail = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    resetMessages();
-    try {
-      const { user, progress } = await verifyEmail(email, verificationCode);
-      setActiveStudentId(user.id);
-      saveProgress(progress);
-      onAuthSuccess(user, progress);
-      onClose();
-    } catch (err: any) {
-      setError(err.message || 'Verification failed. Please check the code in your email.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleResendCode = async () => {
-    setLoading(true);
-    resetMessages();
-    try {
-      const res = await resendVerificationCode(email);
-      setInfoMessage(res.message || 'A new verification code has been dispatched.');
-      if (res.sandboxVerificationCode) {
-        setSandboxCode(res.sandboxVerificationCode);
-      }
-    } catch (err: any) {
-      setError(err.message || 'Failed to resend code.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleRequestReset = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    resetMessages();
-    try {
-      const res = await requestPasswordReset(email);
-      setInfoMessage(res.message || 'A recovery code has been generated.');
-      if (res.sandboxResetCode) {
-        setSandboxResetCode(res.sandboxResetCode);
-      }
-      setMode('reset-code');
-    } catch (err: any) {
-      setError(err.message || 'Failed to request reset.');
+      setError(err.message || 'Registration failed. Please try a different email or username.');
     } finally {
       setLoading(false);
     }
@@ -187,13 +112,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
 
     setLoading(true);
     try {
-      const res = await submitPasswordReset(resetToken, newPassword, confirmNewPassword);
-      setInfoMessage(res.message + ' You can now log in with your new password.');
+      const res = await submitPasswordReset(email, newPassword, confirmNewPassword);
+      setInfoMessage(res.message || 'Password reset successfully! You can now log in.');
       setMode('login');
       setPassword('');
       setConfirmPassword('');
     } catch (err: any) {
-      setError(err.message || 'Password reset failed.');
+      setError(err.message || 'Password reset failed. Please check your registered email address.');
     } finally {
       setLoading(false);
     }
@@ -229,16 +154,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
           <h2 id="auth-modal-title" className="text-xl font-extrabold text-slate-900 dark:text-white">
             {mode === 'login' && 'Sign in to MATHVERSE'}
             {mode === 'register' && 'Create your Student Account'}
-            {mode === 'verify-email' && 'Verify your Email Address'}
             {mode === 'forgot' && 'Reset your Password'}
-            {mode === 'reset-code' && 'Set New Password'}
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             {mode === 'login' && 'Access your personal streaks, bookmarks, and syllabus completion.'}
-            {mode === 'register' && 'One unique username and verified email per student account.'}
-            {mode === 'verify-email' && `Check your inbox at ${email} for your 6-digit code.`}
-            {mode === 'forgot' && 'Enter your registered email to receive an instant recovery code.'}
-            {mode === 'reset-code' && 'Enter the verification code from your email and set a new password.'}
+            {mode === 'register' && 'Instant access to formulas, quizzes, and personal progress tracking.'}
+            {mode === 'forgot' && 'Enter your registered email and choose a new password.'}
           </p>
 
           {/* Mode Switch Tabs */}
@@ -270,23 +191,23 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
           )}
         </div>
 
-        {/* Content Body */}
-        <div className="p-5 overflow-y-auto space-y-4">
+        {/* Modal Body */}
+        <div className="p-5 sm:p-6 overflow-y-auto space-y-4">
           {error && (
-            <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-xs text-rose-700 dark:text-rose-300 flex items-start gap-2">
-              <AlertCircle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
+            <div className="p-3 rounded-2xl bg-rose-500/10 border border-rose-200 dark:border-rose-900/60 text-xs text-rose-600 dark:text-rose-400 flex items-start gap-2 animate-in fade-in">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
               <span>{error}</span>
             </div>
           )}
 
           {infoMessage && (
-            <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 text-xs text-emerald-700 dark:text-emerald-300 flex items-start gap-2">
-              <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+            <div className="p-3 rounded-2xl bg-indigo-500/10 border border-indigo-200 dark:border-indigo-900/60 text-xs text-indigo-600 dark:text-indigo-400 flex items-start gap-2 animate-in fade-in">
+              <Check className="w-4 h-4 shrink-0 mt-0.5 text-indigo-600" />
               <span>{infoMessage}</span>
             </div>
           )}
 
-          {/* 1. SIGN IN FORM */}
+          {/* 1. LOGIN FORM */}
           {mode === 'login' && (
             <form onSubmit={handleLogin} className="space-y-3.5">
               <div>
@@ -316,7 +237,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
                     onClick={() => handleSwitchMode('forgot')}
                     className="text-[11px] text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
                   >
-                    Forgot password?
+                    Forgot Password?
                   </button>
                 </div>
                 <div className="relative">
@@ -343,26 +264,24 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
             </form>
           )}
 
-          {/* 2. REGISTER FORM (With Unique Username and Confirm Password) */}
+          {/* 2. REGISTRATION FORM (Instant direct account creation) */}
           {mode === 'register' && (
             <form onSubmit={handleRegister} className="space-y-3.5">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Student Username (Unique)
+                  Full Name / Student Name
                 </label>
                 <div className="relative">
                   <UserIcon className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
                   <input
                     type="text"
                     required
-                    minLength={3}
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    placeholder="e.g. swathi_reddy"
+                    placeholder="Enter your name"
                     className="w-full pl-9 pr-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
-                <p className="text-[10px] text-slate-400 mt-0.5">Only one account can be created per username.</p>
               </div>
 
               <div>
@@ -380,37 +299,34 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
                     className="w-full pl-9 pr-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
-                <p className="text-[10px] text-slate-400 mt-0.5">A verification code will be sent to this email address.</p>
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Class / Grade
+                  Select Class / Grade
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => setClassGrade(9)}
-                    className={`py-2 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer ${
+                    className={`p-2.5 rounded-xl border flex items-center justify-center gap-2 text-xs font-bold transition cursor-pointer ${
                       classGrade === 9
-                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 shadow-xs'
-                        : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
+                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                        : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100'
                     }`}
                   >
-                    <GraduationCap className="w-4 h-4" />
-                    Class 9
+                    <GraduationCap className="w-4 h-4" /> Class 9
                   </button>
                   <button
                     type="button"
                     onClick={() => setClassGrade(10)}
-                    className={`py-2 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer ${
+                    className={`p-2.5 rounded-xl border flex items-center justify-center gap-2 text-xs font-bold transition cursor-pointer ${
                       classGrade === 10
-                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 shadow-xs'
-                        : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
+                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                        : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100'
                     }`}
                   >
-                    <GraduationCap className="w-4 h-4" />
-                    Class 10 (SSC)
+                    <GraduationCap className="w-4 h-4" /> Class 10
                   </button>
                 </div>
               </div>
@@ -446,7 +362,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
                     >
                       {password === confirmPassword ? (
                         <>
-                          <Check className="w-3 h-3" /> Matches
+                          <Check className="w-3 h-3" /> Passwords match
                         </>
                       ) : (
                         'Does not match'
@@ -477,94 +393,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
                 disabled={loading || (confirmPassword.length > 0 && password !== confirmPassword)}
                 className="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-indigo-600/20 flex items-center justify-center gap-2 transition disabled:opacity-50 cursor-pointer"
               >
-                {loading ? 'Sending Verification Code...' : 'Create Account & Send Code'}
+                {loading ? 'Creating Account...' : 'Create Account & Start Learning'}
                 {!loading && <ArrowRight className="w-4 h-4" />}
               </button>
             </form>
           )}
 
-          {/* 3. EMAIL VERIFICATION STEP (Code is retrieved from inbox, completely hidden from browser inspection) */}
-          {mode === 'verify-email' && (
-            <form onSubmit={handleVerifyEmail} className="space-y-4">
-              <div className="p-4 rounded-2xl bg-indigo-50/80 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/60 text-xs">
-                <div className="flex items-center gap-2 text-indigo-700 dark:text-indigo-300 font-bold mb-1.5">
-                  <Mail className="w-4 h-4" />
-                  <span>Check Your Email Inbox</span>
-                </div>
-                <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
-                  We sent a 6-digit verification code to <strong className="text-indigo-600 dark:text-indigo-400">{email}</strong> from <strong className="text-indigo-600 dark:text-indigo-400">MATHVERSE</strong>.
-                  Please open your email inbox (or spam folder), copy the code, and paste it below.
-                </p>
-
-                {sandboxCode && (
-                  <div className="mt-3 p-2.5 rounded-xl bg-amber-500/10 border border-amber-300 dark:border-amber-700 text-xs">
-                    <div className="flex items-center justify-between text-amber-800 dark:text-amber-200 font-semibold mb-1">
-                      <span>Server Verification Code:</span>
-                      <button
-                        type="button"
-                        onClick={() => setVerificationCode(sandboxCode)}
-                        className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-200 dark:bg-amber-900 text-amber-900 dark:text-amber-100 hover:bg-amber-300 cursor-pointer"
-                      >
-                        Auto-Fill
-                      </button>
-                    </div>
-                    <div className="font-mono text-center tracking-widest text-lg font-bold text-amber-900 dark:text-amber-200 py-1">
-                      {sandboxCode}
-                    </div>
-                    <p className="text-[10px] text-amber-700 dark:text-amber-400">
-                      Hosting email dispatch is in sandbox mode. You can copy the code above or click Auto-Fill to activate your account.
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Enter 6-Digit Verification Code
-                </label>
-                <input
-                  type="text"
-                  required
-                  maxLength={6}
-                  value={verificationCode}
-                  onChange={(e) => setVerificationCode(e.target.value.trim())}
-                  placeholder="Paste 6-digit code from email"
-                  className="w-full text-center tracking-widest font-mono text-xl py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading || verificationCode.length < 6}
-                className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2 transition disabled:opacity-50 cursor-pointer"
-              >
-                {loading ? 'Verifying...' : 'Verify & Activate Account'}
-                {!loading && <CheckCircle className="w-4 h-4" />}
-              </button>
-
-              <div className="flex items-center justify-between pt-2 text-xs">
-                <button
-                  type="button"
-                  onClick={handleResendCode}
-                  disabled={loading}
-                  className="text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 font-semibold cursor-pointer"
-                >
-                  <RotateCw className="w-3 h-3" /> Resend Code
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleSwitchMode('login')}
-                  className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
-                >
-                  Back to Sign In
-                </button>
-              </div>
-            </form>
-          )}
-
-          {/* 4. FORGOT PASSWORD REQUEST FORM */}
+          {/* 3. FORGOT PASSWORD FORM (Direct password reset by email) */}
           {mode === 'forgot' && (
-            <form onSubmit={handleRequestReset} className="space-y-3.5">
+            <form onSubmit={handleResetSubmit} className="space-y-3.5">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   Registered Email Address
@@ -580,68 +417,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
                     className="w-full pl-9 pr-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-indigo-600/20 flex items-center justify-center gap-2 transition disabled:opacity-50 cursor-pointer"
-              >
-                {loading ? 'Sending Code...' : 'Send Recovery Code to Email'}
-                {!loading && <KeyRound className="w-4 h-4" />}
-              </button>
-
-              <div className="text-center pt-2">
-                <button
-                  type="button"
-                  onClick={() => handleSwitchMode('login')}
-                  className="text-xs text-slate-500 hover:text-indigo-600 font-semibold cursor-pointer"
-                >
-                  Back to Sign In
-                </button>
-              </div>
-            </form>
-          )}
-
-          {/* 5. SET NEW PASSWORD FORM (With Confirm New Password) */}
-          {mode === 'reset-code' && (
-            <form onSubmit={handleResetSubmit} className="space-y-3.5">
-              <div className="p-3.5 rounded-2xl bg-indigo-50/80 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/60 text-xs">
-                <p className="text-slate-600 dark:text-slate-300">
-                  Please enter the recovery code sent from <strong className="text-indigo-600 dark:text-indigo-400">MATHVERSE</strong> to <strong className="text-indigo-600 dark:text-indigo-400">{email}</strong>.
-                </p>
-
-                {sandboxResetCode && (
-                  <div className="mt-2.5 p-2 rounded-xl bg-amber-500/10 border border-amber-300 dark:border-amber-700 text-xs">
-                    <div className="flex items-center justify-between text-amber-800 dark:text-amber-200 font-semibold mb-1">
-                      <span>Server Recovery Code:</span>
-                      <button
-                        type="button"
-                        onClick={() => setResetToken(sandboxResetCode)}
-                        className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-200 dark:bg-amber-900 text-amber-900 dark:text-amber-100 hover:bg-amber-300 cursor-pointer"
-                      >
-                        Auto-Fill
-                      </button>
-                    </div>
-                    <div className="font-mono text-center tracking-widest text-base font-bold text-amber-900 dark:text-amber-200 py-0.5">
-                      {sandboxResetCode}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Recovery Code from Email
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={resetToken}
-                  onChange={(e) => setResetToken(e.target.value.trim())}
-                  placeholder="Paste recovery code from email"
-                  className="w-full px-3 py-2 font-mono text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
-                />
               </div>
 
               <div>
@@ -675,7 +450,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
                     >
                       {newPassword === confirmNewPassword ? (
                         <>
-                          <Check className="w-3 h-3" /> Matches
+                          <Check className="w-3 h-3" /> Passwords match
                         </>
                       ) : (
                         'Does not match'
@@ -704,9 +479,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
               <button
                 type="submit"
                 disabled={loading || (confirmNewPassword.length > 0 && newPassword !== confirmNewPassword)}
-                className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2 transition disabled:opacity-50 cursor-pointer"
+                className="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-indigo-600/20 flex items-center justify-center gap-2 transition disabled:opacity-50 cursor-pointer"
               >
-                {loading ? 'Updating Password...' : 'Save New Password & Log In'}
+                {loading ? 'Updating Password...' : 'Save New Password & Sign In'}
+                {!loading && <KeyRound className="w-4 h-4" />}
               </button>
 
               <div className="text-center pt-2">
@@ -721,9 +497,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
             </form>
           )}
 
-          {/* Privacy Note */}
+          {/* Cloud Sync Footer */}
           <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-400 text-center">
-            Verification codes are dispatched strictly to your email and hidden from browser inspection.
+            Cloud Sync: Your streak, practice test records, and progress are saved automatically.
           </div>
         </div>
       </div>

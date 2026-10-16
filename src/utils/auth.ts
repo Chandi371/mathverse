@@ -137,7 +137,7 @@ export async function requestPasswordReset(
 }
 
 export async function submitPasswordReset(
-  token: string,
+  emailOrToken: string,
   newPassword: string,
   confirmNewPassword: string
 ): Promise<{ success: boolean; message: string }> {
@@ -145,7 +145,7 @@ export async function submitPasswordReset(
     '/api/auth/reset-password',
     {
       method: 'POST',
-      body: JSON.stringify({ token, newPassword, confirmNewPassword }),
+      body: JSON.stringify({ email: emailOrToken, token: emailOrToken, newPassword, confirmNewPassword }),
     }
   );
 }

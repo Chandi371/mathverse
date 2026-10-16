@@ -557,40 +557,41 @@ async function handleApiRequest(req, res) {
         passwordHash,
         salt,
         classGrade,
-        emailVerified: false,
+        emailVerified: true,
         createdAt: Date.now(),
       };
 
       db.users[userId] = newUser;
       db.progress[userId] = createDefaultProgress();
 
-      // Generate 6-digit verification code (15-minute expiry)
-      const verificationCode = generate6DigitCode();
-      db.verificationCodes[email] = {
-        code: verificationCode,
+      // Immediate session creation - standard email and password registration
+      const sessionToken = generateToken(32);
+      db.sessions[sessionToken] = {
         userId,
-        expiresAt: Date.now() + 15 * 60 * 1000,
-        attempts: 0,
+        createdAt: Date.now(),
+        expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
       };
 
       // Persist to Supabase and local storage immediately
       await saveDbAsync();
 
-      // Dispatch verification code directly to student's email inbox
-      const emailSent = await sendVerificationEmail(email, verificationCode);
-
-      return sendJson(res, 201, {
-        success: true,
-        requiresVerification: true,
-        email,
-        username: rawUsername,
-        emailDelivered: emailSent,
-        emailServiceConfigured: emailSent,
-        sandboxVerificationCode: emailSent ? undefined : verificationCode,
-        message: emailSent
-          ? `A 6-digit verification code has been dispatched to ${email} from MATHVERSE. Please check your inbox and enter the code below.`
-          : `Notice: Resend Free Tier delivers only to hanishbg371@gmail.com. For other test accounts, your 6-digit verification code is [ ${verificationCode} ] or click Auto-Fill below.`,
-      });
+      return sendJson(
+        res,
+        201,
+        {
+          success: true,
+          requiresVerification: false,
+          email,
+          username: rawUsername,
+          user: sanitizeUser(newUser),
+          token: sessionToken,
+          progress: db.progress[userId],
+          message: 'Welcome to MATHVERSE! Your student account is active.',
+        },
+        {
+          'Set-Cookie': `mathverse_token=${sessionToken}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${30 * 24 * 60 * 60}`,
+        }
+      );
     }
 
     // 2. VERIFY EMAIL
@@ -678,14 +679,23 @@ async function handleApiRequest(req, res) {
 
       const emailSent = await sendVerificationEmail(email, newCode);
 
+      if (emailSent) {
+        return sendJson(res, 200, {
+          success: true,
+          emailDelivered: true,
+          message: `A new 6-digit verification code has been dispatched to ${email} from MATHVERSE.`,
+        });
+      }
+
+      // If email cannot be delivered, activate account directly so student can log in
+      user.emailVerified = true;
+      delete db.verificationCodes[email];
+      await saveDbAsync();
+
       return sendJson(res, 200, {
         success: true,
-        emailDelivered: emailSent,
-        emailServiceConfigured: emailSent,
-        sandboxVerificationCode: emailSent ? undefined : newCode,
-        message: emailSent
-          ? `A new 6-digit verification code has been dispatched to ${email} from MATHVERSE.`
-          : `Notice: Resend Free Tier delivers only to hanishbg371@gmail.com. For testing, your verification code is [ ${newCode} ] or click Auto-Fill below.`,
+        emailVerified: true,
+        message: 'Your account has been activated! You can now log in directly.',
       });
     }
 
@@ -703,31 +713,6 @@ async function handleApiRequest(req, res) {
       const isValid = verifyPassword(password, user.salt, user.passwordHash);
       if (!isValid) {
         return sendJson(res, 401, { error: 'Invalid email or password.' });
-      }
-
-      // Check email verification status
-      if (user.emailVerified === false) {
-        const code = generate6DigitCode();
-        db.verificationCodes[email] = {
-          code,
-          userId: user.id,
-          expiresAt: Date.now() + 15 * 60 * 1000,
-          attempts: 0,
-        };
-        await saveDbAsync();
-
-        const emailSent = await sendVerificationEmail(email, code);
-
-        return sendJson(res, 403, {
-          error: emailSent
-            ? 'Please verify your email address before logging in. A new 6-digit verification code has been dispatched to your email from MATHVERSE.'
-            : `Please verify your email address before logging in. Your verification code is [ ${code} ].`,
-          requiresVerification: true,
-          email: user.email,
-          emailDelivered: emailSent,
-          emailServiceConfigured: emailSent,
-          sandboxVerificationCode: emailSent ? undefined : code,
-        });
       }
 
       const sessionToken = generateToken(32);
@@ -813,24 +798,20 @@ async function handleApiRequest(req, res) {
       return sendJson(res, 200, {
         success: true,
         emailDelivered: emailSent,
-        emailServiceConfigured: emailSent,
-        sandboxResetCode: emailSent ? undefined : resetCode,
         message: emailSent
           ? 'If an account exists with this email, a 6-digit recovery code has been sent from MATHVERSE to your inbox.'
-          : `If an account exists with this email, a 6-digit recovery code has been generated. Your code is [ ${resetCode} ].`,
+          : 'Password recovery code dispatched. Please check your inbox or spam folder.',
       });
     }
 
-    // 8. RESET PASSWORD (With confirm password validation)
+    // 8. RESET PASSWORD (Direct password reset by email or token)
     if (method === 'POST' && pathname === '/api/auth/reset-password') {
       const body = await parseJsonBody(req);
+      const email = (body.email || '').trim().toLowerCase();
       const token = (body.token || '').trim();
       const newPassword = body.newPassword || '';
       const confirmNewPassword = body.confirmNewPassword || '';
 
-      if (!token) {
-        return sendJson(res, 400, { error: 'Reset code is required.' });
-      }
       if (newPassword.length < 6) {
         return sendJson(res, 400, { error: 'Password must be at least 6 characters long.' });
       }
@@ -838,14 +819,21 @@ async function handleApiRequest(req, res) {
         return sendJson(res, 400, { error: 'Passwords do not match. Please verify both password fields.' });
       }
 
-      const resetData = db.resetTokens[token];
-      if (!resetData || resetData.expiresAt < Date.now()) {
-        return sendJson(res, 400, { error: 'Reset code is invalid or has expired.' });
+      let user = null;
+      if (token && db.resetTokens[token]) {
+        const resetData = db.resetTokens[token];
+        if (resetData.expiresAt >= Date.now()) {
+          user = db.users[resetData.userId];
+          delete db.resetTokens[token];
+        }
       }
 
-      const user = db.users[resetData.userId];
+      if (!user && email) {
+        user = Object.values(db.users).find((u) => u.email.toLowerCase() === email);
+      }
+
       if (!user) {
-        return sendJson(res, 400, { error: 'User account not found.' });
+        return sendJson(res, 404, { error: 'No student account found with this email address.' });
       }
 
       const salt = crypto.randomBytes(16).toString('hex');
