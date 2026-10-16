@@ -11,7 +11,7 @@ const __dirname = path.dirname(__filename);
 
 const PORT = process.env.PORT || 3000;
 const DIST_DIR = path.join(__dirname, 'dist');
-const DATA_DIR = path.join(__dirname, 'data');
+const DATA_DIR = process.env.VERCEL ? path.join('/tmp', 'data') : path.join(__dirname, 'data');
 const DB_FILE = path.join(DATA_DIR, 'mathverse_db.json');
 
 // --- DATABASE & PERSISTENCE LAYER (DUAL-MODE: SUPABASE / POSTGRES + LOCAL FALLBACK) ---
@@ -35,8 +35,12 @@ function purgeDeletedAccounts(_data) {
 }
 
 function initDb() {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+  } catch (err) {
+    console.warn('[DATABASE] Local data dir creation:', err.message);
   }
 
   if (fs.existsSync(DB_FILE)) {
@@ -81,7 +85,7 @@ async function saveDbAsync() {
     fs.writeFileSync(tmpFile, JSON.stringify(db, null, 2), 'utf8');
     fs.renameSync(tmpFile, DB_FILE);
   } catch (err) {
-    console.error('[DATABASE] Error saving local DB atomically:', err);
+    console.warn('[DATABASE] Local DB file save skipped in read-only/serverless:', err.message);
   }
 
   // 2. Cloud database synchronization (Supabase / PostgreSQL)
@@ -143,7 +147,10 @@ async function loadStateFromCloud() {
 }
 
 async function ensureCloudLoaded() {
-  if (!isCloudLoaded && cloudLoadPromise) {
+  if (!isCloudLoaded) {
+    if (!cloudLoadPromise) {
+      cloudLoadPromise = loadStateFromCloud();
+    }
     await cloudLoadPromise;
   }
 }
@@ -1059,7 +1066,12 @@ const server = http.createServer((req, res) => {
 
 cloudLoadPromise = loadStateFromCloud();
 
-server.listen(PORT, async () => {
-  console.log(`MATHVERSE full-stack service running on port ${PORT}`);
-  await cloudLoadPromise;
-});
+if (!process.env.VERCEL) {
+  server.listen(PORT, async () => {
+    console.log(`MATHVERSE full-stack service running on port ${PORT}`);
+    await cloudLoadPromise;
+  });
+}
+
+export { handleApiRequest };
+
