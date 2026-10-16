@@ -34,76 +34,34 @@ function getStorageKey(): string {
   return GUEST_STORAGE_KEY;
 }
 
-export function mergeUserProgress(base: UserProgress, incoming: UserProgress): UserProgress {
-  const completed = Array.from(new Set([
-    ...(Array.isArray(base?.completedChapterIds) ? base.completedChapterIds : []),
-    ...(Array.isArray(incoming?.completedChapterIds) ? incoming.completedChapterIds : []),
-  ]));
-
-  const bookmarked = Array.from(new Set([
-    ...(Array.isArray(base?.bookmarkedFormulaIds) ? base.bookmarkedFormulaIds : []),
-    ...(Array.isArray(incoming?.bookmarkedFormulaIds) ? incoming.bookmarkedFormulaIds : []),
-  ]));
-
-  return {
-    lastVisitedChapterId: incoming?.lastVisitedChapterId || base?.lastVisitedChapterId || null,
-    completedChapterIds: completed,
-    bookmarkedFormulaIds: bookmarked,
-    practiceStats: {
-      totalAttempted: Math.max(base?.practiceStats?.totalAttempted || 0, incoming?.practiceStats?.totalAttempted || 0),
-      correctCount: Math.max(base?.practiceStats?.correctCount || 0, incoming?.practiceStats?.correctCount || 0),
-      currentStreak: Math.max(base?.practiceStats?.currentStreak || 0, incoming?.practiceStats?.currentStreak || 0),
-      bestStreak: Math.max(base?.practiceStats?.bestStreak || 0, incoming?.practiceStats?.bestStreak || 0),
-    },
-    questionHistory: {
-      ...(base?.questionHistory || {}),
-      ...(incoming?.questionHistory || {}),
-    },
-    updatedAt: Math.max(base?.updatedAt || 0, incoming?.updatedAt || 0, Date.now()),
-  };
-}
-
 export function loadProgress(): UserProgress {
   try {
     const key = getStorageKey();
     let raw = localStorage.getItem(key);
 
-    let parsed: any = null;
-    if (raw) {
-      try {
-        parsed = JSON.parse(raw);
-      } catch {}
+    // If guest mode and no v2 guest data, check legacy v1 storage
+    if (!raw && !activeStudentId) {
+      const legacyRaw = localStorage.getItem(LEGACY_STORAGE_KEY);
+      if (legacyRaw) {
+        raw = legacyRaw;
+        localStorage.setItem(GUEST_STORAGE_KEY, legacyRaw);
+      }
     }
 
-    // Check fallback storage if current key is empty or has zero bookmarks/progress
-    const guestRaw = localStorage.getItem(GUEST_STORAGE_KEY);
-    const legacyRaw = localStorage.getItem(LEGACY_STORAGE_KEY);
-    let guestParsed: any = null;
-    let legacyParsed: any = null;
+    if (!raw) return { ...defaultProgress };
 
-    if (guestRaw) {
-      try { guestParsed = JSON.parse(guestRaw); } catch {}
-    }
-    if (legacyRaw) {
-      try { legacyParsed = JSON.parse(legacyRaw); } catch {}
-    }
-
-    let combined = { ...defaultProgress };
-
-    // 1. Seed from legacy if present
-    if (legacyParsed) {
-      combined = mergeUserProgress(combined, legacyParsed);
-    }
-    // 2. Seed from guest if present
-    if (guestParsed) {
-      combined = mergeUserProgress(combined, guestParsed);
-    }
-    // 3. Seed from current user storage if present
-    if (parsed) {
-      combined = mergeUserProgress(combined, parsed);
-    }
-
-    return combined;
+    const parsed = JSON.parse(raw);
+    return {
+      ...defaultProgress,
+      ...parsed,
+      completedChapterIds: Array.isArray(parsed.completedChapterIds) ? parsed.completedChapterIds : [],
+      bookmarkedFormulaIds: Array.isArray(parsed.bookmarkedFormulaIds) ? parsed.bookmarkedFormulaIds : [],
+      practiceStats: {
+        ...defaultProgress.practiceStats,
+        ...(parsed.practiceStats || {}),
+      },
+      questionHistory: parsed.questionHistory || {},
+    };
   } catch (err) {
     console.error('Failed to parse progress from localStorage:', err);
     return { ...defaultProgress };
@@ -115,10 +73,7 @@ export function saveProgress(progress: UserProgress): void {
     const key = getStorageKey();
     localStorage.setItem(key, JSON.stringify(progress));
 
-    // Also update guest storage as fallback cache
-    localStorage.setItem(GUEST_STORAGE_KEY, JSON.stringify(progress));
-
-    // If authenticated, sync asynchronously to server
+    // If authenticated, sync asynchronously to server for this specific user
     if (activeStudentId && getStoredToken()) {
       pushProgressToCloud(progress).catch((err) => {
         console.warn('Background cloud progress sync deferred:', err);
@@ -160,67 +115,12 @@ export async function pullProgressFromCloud(): Promise<UserProgress | null> {
     if (!res.ok) return null;
     const data = await res.json();
     if (data.progress) {
-      const local = loadProgress();
-      const merged = mergeUserProgress(local, data.progress);
-      saveProgress(merged);
-      return merged;
-    }
-    return null;
-  } catch (err) {
-    console.warn('Failed to pull progress from cloud, using cached local copy:', err);
-    return null;
-  }
-}
-
-export function getGuestProgress(): UserProgress | null {
-  try {
-    const raw = localStorage.getItem(GUEST_STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    const hasData =
-      (parsed.completedChapterIds && parsed.completedChapterIds.length > 0) ||
-      (parsed.bookmarkedFormulaIds && parsed.bookmarkedFormulaIds.length > 0) ||
-      (parsed.questionHistory && Object.keys(parsed.questionHistory).length > 0) ||
-      (parsed.practiceStats && parsed.practiceStats.totalAttempted > 0);
-    return hasData ? parsed : null;
-  } catch {
-    return null;
-  }
-}
-
-export function clearGuestProgress(): void {
-  try {
-    localStorage.removeItem(GUEST_STORAGE_KEY);
-    localStorage.removeItem(LEGACY_STORAGE_KEY);
-  } catch (err) {
-    console.error('Failed to clear guest storage:', err);
-  }
-}
-
-export async function mergeGuestProgressIntoCloud(): Promise<UserProgress | null> {
-  const guest = getGuestProgress();
-  const token = getStoredToken();
-  if (!guest || !token) return null;
-
-  try {
-    const res = await fetch('/api/progress/merge-guest', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ guestProgress: guest }),
-    });
-
-    if (!res.ok) throw new Error('Failed to merge guest progress');
-    const data = await res.json();
-    if (data.progress) {
       saveProgress(data.progress);
       return data.progress;
     }
     return null;
   } catch (err) {
-    console.error('Error merging guest progress into cloud:', err);
+    console.warn('Failed to pull progress from cloud, using cached local copy:', err);
     return null;
   }
 }
@@ -302,8 +202,6 @@ export function resetAllProgress(): UserProgress {
   try {
     const key = getStorageKey();
     localStorage.removeItem(key);
-    localStorage.removeItem(GUEST_STORAGE_KEY);
-    localStorage.removeItem(LEGACY_STORAGE_KEY);
   } catch (err) {
     console.error('Failed to clear storage:', err);
   }

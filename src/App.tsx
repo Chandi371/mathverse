@@ -21,7 +21,6 @@ import {
   resetAllProgress,
   setActiveStudentId,
   saveProgress,
-  mergeUserProgress,
   defaultProgress,
 } from './utils/storage';
 import { fetchCurrentStudent, logoutStudent } from './utils/auth';
@@ -40,7 +39,7 @@ export function App() {
   const [user, setUser] = useState<StudentUser | null>(null);
   const [progress, setProgress] = useState<UserProgress>(loadProgress());
 
-  // Restore authenticated session on load with progress preservation
+  // Restore authenticated session on load with strict account isolation
   useEffect(() => {
     let isMounted = true;
     fetchCurrentStudent().then((result) => {
@@ -48,10 +47,9 @@ export function App() {
       if (result && result.user) {
         setUser(result.user);
         setActiveStudentId(result.user.id);
-        const local = loadProgress();
-        const merged = mergeUserProgress(local, result.progress || defaultProgress);
-        saveProgress(merged);
-        setProgress(merged);
+        const userProg = result.progress || loadProgress();
+        saveProgress(userProg);
+        setProgress(userProg);
       } else {
         setActiveStudentId(null);
         setProgress(loadProgress());
@@ -65,10 +63,9 @@ export function App() {
   const handleAuthSuccess = (authenticatedUser: StudentUser, updatedProgress: UserProgress) => {
     setUser(authenticatedUser);
     setActiveStudentId(authenticatedUser.id);
-    const local = loadProgress();
-    const merged = mergeUserProgress(local, updatedProgress || defaultProgress);
-    saveProgress(merged);
-    setProgress(merged);
+    const userProg = updatedProgress || defaultProgress;
+    saveProgress(userProg);
+    setProgress(userProg);
   };
 
   const handleLogout = async () => {

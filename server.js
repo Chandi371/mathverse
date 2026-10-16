@@ -916,44 +916,6 @@ async function handleApiRequest(req, res) {
       return sendJson(res, 200, { success: true, progress: updatedProgress });
     }
 
-    // 10b. MERGE GUEST PROGRESS INTO CLOUD
-    if (method === 'POST' && pathname === '/api/progress/merge-guest') {
-      const auth = authenticateUser(req);
-      if (!auth) {
-        return sendJson(res, 401, { error: 'Authentication required' });
-      }
-      const body = await parseJsonBody(req);
-      const incoming = body.guestProgress || body.progress || {};
-      const existing = db.progress[auth.user.id] || createDefaultProgress();
-
-      const mergedProgress = {
-        lastVisitedChapterId: incoming.lastVisitedChapterId || existing.lastVisitedChapterId || null,
-        completedChapterIds: Array.from(new Set([
-          ...(Array.isArray(existing.completedChapterIds) ? existing.completedChapterIds : []),
-          ...(Array.isArray(incoming.completedChapterIds) ? incoming.completedChapterIds : []),
-        ])),
-        bookmarkedFormulaIds: Array.from(new Set([
-          ...(Array.isArray(existing.bookmarkedFormulaIds) ? existing.bookmarkedFormulaIds : []),
-          ...(Array.isArray(incoming.bookmarkedFormulaIds) ? incoming.bookmarkedFormulaIds : []),
-        ])),
-        practiceStats: {
-          totalAttempted: Math.max(existing.practiceStats?.totalAttempted || 0, incoming.practiceStats?.totalAttempted || 0),
-          correctCount: Math.max(existing.practiceStats?.correctCount || 0, incoming.practiceStats?.correctCount || 0),
-          currentStreak: Math.max(existing.practiceStats?.currentStreak || 0, incoming.practiceStats?.currentStreak || 0),
-          bestStreak: Math.max(existing.practiceStats?.bestStreak || 0, incoming.practiceStats?.bestStreak || 0),
-        },
-        questionHistory: {
-          ...(existing.questionHistory || {}),
-          ...(incoming.questionHistory || {}),
-        },
-        updatedAt: Date.now(),
-      };
-
-      db.progress[auth.user.id] = mergedProgress;
-      await saveDbAsync();
-      return sendJson(res, 200, { success: true, progress: mergedProgress });
-    }
-
     // 11. PUBLIC AGGREGATE STATS
     if (method === 'GET' && pathname === '/api/stats/global') {
       return sendJson(res, 200, {
