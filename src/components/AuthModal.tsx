@@ -16,7 +16,7 @@ import {
   loginStudent,
   submitPasswordReset,
 } from '../utils/auth';
-import { setActiveStudentId, saveProgress } from '../utils/storage';
+import { setActiveStudentId, saveProgress, loadProgress, mergeUserProgress, defaultProgress } from '../utils/storage';
 import type { StudentUser } from '../types/auth';
 import type { UserProgress } from '../types/progress';
 
@@ -63,8 +63,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
     try {
       const { user, progress } = await loginStudent(email, password);
       setActiveStudentId(user.id);
-      saveProgress(progress);
-      onAuthSuccess(user, progress);
+      const local = loadProgress();
+      const merged = mergeUserProgress(local, progress || defaultProgress);
+      saveProgress(merged);
+      onAuthSuccess(user, merged);
       onClose();
     } catch (err: any) {
       setError(err.message || 'Login failed. Please check your email and password.');
@@ -87,8 +89,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuc
       const res = await registerStudent(email, username, password, confirmPassword, classGrade);
       if (res.user && res.token) {
         setActiveStudentId(res.user.id);
-        saveProgress(res.progress);
-        onAuthSuccess(res.user, res.progress);
+        const local = loadProgress();
+        const merged = mergeUserProgress(local, res.progress || defaultProgress);
+        saveProgress(merged);
+        onAuthSuccess(res.user, merged);
         onClose();
       } else {
         setInfoMessage(res.message || 'Account created! You can now sign in.');

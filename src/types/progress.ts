@@ -9,4 +9,5 @@ export interface UserProgress {
     bestStreak: number;
   };
   questionHistory: Record<string, { answered: boolean; isCorrect: boolean; timestamp: number }>;
+  updatedAt?: number;
 }

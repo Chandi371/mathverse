@@ -34,32 +34,76 @@ function getStorageKey(): string {
   return GUEST_STORAGE_KEY;
 }
 
+export function mergeUserProgress(base: UserProgress, incoming: UserProgress): UserProgress {
+  const completed = Array.from(new Set([
+    ...(Array.isArray(base?.completedChapterIds) ? base.completedChapterIds : []),
+    ...(Array.isArray(incoming?.completedChapterIds) ? incoming.completedChapterIds : []),
+  ]));
+
+  const bookmarked = Array.from(new Set([
+    ...(Array.isArray(base?.bookmarkedFormulaIds) ? base.bookmarkedFormulaIds : []),
+    ...(Array.isArray(incoming?.bookmarkedFormulaIds) ? incoming.bookmarkedFormulaIds : []),
+  ]));
+
+  return {
+    lastVisitedChapterId: incoming?.lastVisitedChapterId || base?.lastVisitedChapterId || null,
+    completedChapterIds: completed,
+    bookmarkedFormulaIds: bookmarked,
+    practiceStats: {
+      totalAttempted: Math.max(base?.practiceStats?.totalAttempted || 0, incoming?.practiceStats?.totalAttempted || 0),
+      correctCount: Math.max(base?.practiceStats?.correctCount || 0, incoming?.practiceStats?.correctCount || 0),
+      currentStreak: Math.max(base?.practiceStats?.currentStreak || 0, incoming?.practiceStats?.currentStreak || 0),
+      bestStreak: Math.max(base?.practiceStats?.bestStreak || 0, incoming?.practiceStats?.bestStreak || 0),
+    },
+    questionHistory: {
+      ...(base?.questionHistory || {}),
+      ...(incoming?.questionHistory || {}),
+    },
+    updatedAt: Math.max(base?.updatedAt || 0, incoming?.updatedAt || 0, Date.now()),
+  };
+}
+
 export function loadProgress(): UserProgress {
   try {
     const key = getStorageKey();
     let raw = localStorage.getItem(key);
 
-    // Backward compatibility: If guest storage is empty, check legacy v1 storage
-    if (!raw && !activeStudentId) {
-      const legacyRaw = localStorage.getItem(LEGACY_STORAGE_KEY);
-      if (legacyRaw) {
-        raw = legacyRaw;
-        // Migrate to guest v2
-        localStorage.setItem(GUEST_STORAGE_KEY, legacyRaw);
-      }
+    let parsed: any = null;
+    if (raw) {
+      try {
+        parsed = JSON.parse(raw);
+      } catch {}
     }
 
-    if (!raw) return { ...defaultProgress };
-    const parsed = JSON.parse(raw);
-    return {
-      ...defaultProgress,
-      ...parsed,
-      practiceStats: {
-        ...defaultProgress.practiceStats,
-        ...(parsed.practiceStats || {}),
-      },
-      questionHistory: parsed.questionHistory || {},
-    };
+    // Check fallback storage if current key is empty or has zero bookmarks/progress
+    const guestRaw = localStorage.getItem(GUEST_STORAGE_KEY);
+    const legacyRaw = localStorage.getItem(LEGACY_STORAGE_KEY);
+    let guestParsed: any = null;
+    let legacyParsed: any = null;
+
+    if (guestRaw) {
+      try { guestParsed = JSON.parse(guestRaw); } catch {}
+    }
+    if (legacyRaw) {
+      try { legacyParsed = JSON.parse(legacyRaw); } catch {}
+    }
+
+    let combined = { ...defaultProgress };
+
+    // 1. Seed from legacy if present
+    if (legacyParsed) {
+      combined = mergeUserProgress(combined, legacyParsed);
+    }
+    // 2. Seed from guest if present
+    if (guestParsed) {
+      combined = mergeUserProgress(combined, guestParsed);
+    }
+    // 3. Seed from current user storage if present
+    if (parsed) {
+      combined = mergeUserProgress(combined, parsed);
+    }
+
+    return combined;
   } catch (err) {
     console.error('Failed to parse progress from localStorage:', err);
     return { ...defaultProgress };
@@ -71,7 +115,10 @@ export function saveProgress(progress: UserProgress): void {
     const key = getStorageKey();
     localStorage.setItem(key, JSON.stringify(progress));
 
-    // If authenticated, also sync asynchronously to server
+    // Also update guest storage as fallback cache
+    localStorage.setItem(GUEST_STORAGE_KEY, JSON.stringify(progress));
+
+    // If authenticated, sync asynchronously to server
     if (activeStudentId && getStoredToken()) {
       pushProgressToCloud(progress).catch((err) => {
         console.warn('Background cloud progress sync deferred:', err);
@@ -82,18 +129,22 @@ export function saveProgress(progress: UserProgress): void {
   }
 }
 
-async function pushProgressToCloud(progress: UserProgress): Promise<void> {
+export async function pushProgressToCloud(progress: UserProgress): Promise<void> {
   const token = getStoredToken();
   if (!token) return;
 
-  await fetch('/api/progress', {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(progress),
-  });
+  try {
+    await fetch('/api/progress', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(progress),
+    });
+  } catch (err) {
+    console.warn('Failed to sync progress to cloud:', err);
+  }
 }
 
 export async function pullProgressFromCloud(): Promise<UserProgress | null> {
@@ -109,8 +160,10 @@ export async function pullProgressFromCloud(): Promise<UserProgress | null> {
     if (!res.ok) return null;
     const data = await res.json();
     if (data.progress) {
-      saveProgress(data.progress);
-      return data.progress;
+      const local = loadProgress();
+      const merged = mergeUserProgress(local, data.progress);
+      saveProgress(merged);
+      return merged;
     }
     return null;
   } catch (err) {
@@ -121,7 +174,7 @@ export async function pullProgressFromCloud(): Promise<UserProgress | null> {
 
 export function getGuestProgress(): UserProgress | null {
   try {
-    const raw = localStorage.getItem(GUEST_STORAGE_KEY);
+    const raw = localStorage.getItem(GUEST_STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     const hasData =
@@ -163,7 +216,6 @@ export async function mergeGuestProgressIntoCloud(): Promise<UserProgress | null
     const data = await res.json();
     if (data.progress) {
       saveProgress(data.progress);
-      clearGuestProgress();
       return data.progress;
     }
     return null;
@@ -177,18 +229,15 @@ export function recordQuestionAnswer(questionId: string, isCorrect: boolean): Us
   const current = loadProgress();
   const existing = current.questionHistory[questionId];
 
-  // If question was never attempted before, increment unique attempted
   const totalAttempted = existing
     ? current.practiceStats.totalAttempted
     : current.practiceStats.totalAttempted + 1;
 
-  // If question was never answered correctly before, and now is correct, increment correctCount
   const wasAlreadyCorrect = existing && existing.isCorrect;
   const correctCount = !wasAlreadyCorrect && isCorrect
     ? current.practiceStats.correctCount + 1
     : current.practiceStats.correctCount;
 
-  // Streak logic: streaks reflect consecutive correct answers
   const currentStreak = isCorrect ? current.practiceStats.currentStreak + 1 : 0;
   const bestStreak = Math.max(current.practiceStats.bestStreak, currentStreak);
 
@@ -208,6 +257,7 @@ export function recordQuestionAnswer(questionId: string, isCorrect: boolean): Us
         timestamp: Date.now(),
       },
     },
+    updatedAt: Date.now(),
   };
 
   saveProgress(updated);
@@ -222,6 +272,7 @@ export function toggleChapterCompleted(chapterId: string): UserProgress {
     completedChapterIds: exists
       ? current.completedChapterIds.filter((id) => id !== chapterId)
       : [...current.completedChapterIds, chapterId],
+    updatedAt: Date.now(),
   };
   saveProgress(updated);
   return updated;
@@ -235,6 +286,7 @@ export function toggleBookmarkFormula(formulaId: string): UserProgress {
     bookmarkedFormulaIds: exists
       ? current.bookmarkedFormulaIds.filter((id) => id !== formulaId)
       : [...current.bookmarkedFormulaIds, formulaId],
+    updatedAt: Date.now(),
   };
   saveProgress(updated);
   return updated;
@@ -250,12 +302,12 @@ export function resetAllProgress(): UserProgress {
   try {
     const key = getStorageKey();
     localStorage.removeItem(key);
+    localStorage.removeItem(GUEST_STORAGE_KEY);
+    localStorage.removeItem(LEGACY_STORAGE_KEY);
   } catch (err) {
     console.error('Failed to clear storage:', err);
   }
   const fresh = { ...defaultProgress };
-  if (activeStudentId && getStoredToken()) {
-    pushProgressToCloud(fresh).catch(console.warn);
-  }
+  saveProgress(fresh);
   return fresh;
 }
