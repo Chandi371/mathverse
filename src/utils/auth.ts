@@ -52,10 +52,14 @@ export async function registerStudent(
   confirmPassword: string,
   classGrade: 9 | 10
 ): Promise<AuthResponse> {
-  return await apiFetch<AuthResponse>('/api/auth/register', {
+  const data = await apiFetch<AuthResponse>('/api/auth/register', {
     method: 'POST',
     body: JSON.stringify({ email, username, password, confirmPassword, classGrade }),
   });
+  if (data.token) {
+    setStoredToken(data.token);
+  }
+  return data;
 }
 
 export async function verifyEmail(

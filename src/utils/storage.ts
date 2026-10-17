@@ -68,6 +68,62 @@ export function loadProgress(): UserProgress {
   }
 }
 
+export function mergeUserProgress(
+  cloud: UserProgress | null | undefined,
+  local: UserProgress | null | undefined
+): UserProgress {
+  if (!cloud && !local) return { ...defaultProgress };
+  if (!cloud) return { ...defaultProgress, ...local };
+  if (!local) return { ...defaultProgress, ...cloud };
+
+  // Combine unique completed chapters
+  const completedSet = new Set<string>([
+    ...(Array.isArray(cloud.completedChapterIds) ? cloud.completedChapterIds : []),
+    ...(Array.isArray(local.completedChapterIds) ? local.completedChapterIds : []),
+  ]);
+
+  // Combine unique bookmarked formulas
+  const bookmarkSet = new Set<string>([
+    ...(Array.isArray(cloud.bookmarkedFormulaIds) ? cloud.bookmarkedFormulaIds : []),
+    ...(Array.isArray(local.bookmarkedFormulaIds) ? local.bookmarkedFormulaIds : []),
+  ]);
+
+  // Take the highest practice stats
+  const totalAttempted = Math.max(
+    Number(cloud.practiceStats?.totalAttempted ?? 0),
+    Number(local.practiceStats?.totalAttempted ?? 0)
+  );
+  const correctCount = Math.max(
+    Number(cloud.practiceStats?.correctCount ?? 0),
+    Number(local.practiceStats?.correctCount ?? 0)
+  );
+  const currentStreak = Math.max(
+    Number(cloud.practiceStats?.currentStreak ?? 0),
+    Number(local.practiceStats?.currentStreak ?? 0)
+  );
+  const bestStreak = Math.max(
+    Number(cloud.practiceStats?.bestStreak ?? 0),
+    Number(local.practiceStats?.bestStreak ?? 0)
+  );
+
+  return {
+    lastVisitedChapterId: cloud.lastVisitedChapterId || local.lastVisitedChapterId || null,
+    completedChapterIds: Array.from(completedSet),
+    bookmarkedFormulaIds: Array.from(bookmarkSet),
+    practiceStats: {
+      totalAttempted,
+      correctCount,
+      currentStreak,
+      bestStreak,
+    },
+    questionHistory: {
+      ...(local.questionHistory || {}),
+      ...(cloud.questionHistory || {}),
+    },
+    updatedAt: Math.max(Number(cloud.updatedAt ?? 0), Number(local.updatedAt ?? 0), Date.now()),
+  };
+}
+
 export function saveProgress(progress: UserProgress): void {
   try {
     const key = getStorageKey();

@@ -21,7 +21,7 @@ import {
   resetAllProgress,
   setActiveStudentId,
   saveProgress,
-  defaultProgress,
+  mergeUserProgress,
 } from './utils/storage';
 import { fetchCurrentStudent, logoutStudent } from './utils/auth';
 import type { UserProgress } from './types/progress';
@@ -48,9 +48,10 @@ export function App() {
       if (result && result.user) {
         setUser(result.user);
         setActiveStudentId(result.user.id);
-        const userProg = result.progress || loadProgress();
-        saveProgress(userProg);
-        setProgress(userProg);
+        const localProg = loadProgress();
+        const mergedProg = mergeUserProgress(result.progress, localProg);
+        saveProgress(mergedProg);
+        setProgress(mergedProg);
       } else {
         setActiveStudentId(null);
         setProgress(loadProgress());
@@ -64,9 +65,10 @@ export function App() {
   const handleAuthSuccess = (authenticatedUser: StudentUser, updatedProgress: UserProgress) => {
     setUser(authenticatedUser);
     setActiveStudentId(authenticatedUser.id);
-    const userProg = updatedProgress || defaultProgress;
-    saveProgress(userProg);
-    setProgress(userProg);
+    const localProg = loadProgress();
+    const mergedProg = mergeUserProgress(updatedProgress, localProg);
+    saveProgress(mergedProg);
+    setProgress(mergedProg);
   };
 
   const handleLogout = async () => {

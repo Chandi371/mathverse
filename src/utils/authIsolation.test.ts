@@ -6,6 +6,7 @@ import {
   recordQuestionAnswer,
   toggleChapterCompleted,
   toggleBookmarkFormula,
+  mergeUserProgress,
 } from './storage';
 import crypto from 'node:crypto';
 import { Buffer } from 'node:buffer';
@@ -259,5 +260,66 @@ describe('MATHVERSE Account Integrity & Verification Logic', () => {
     expect(passwordResetResponse).not.toHaveProperty('resetToken');
     expect(passwordResetResponse).not.toHaveProperty('code');
   });
+
+  describe('3. Student Progress Reconciliation & Anti-Wipe Protection', () => {
+    it('preserves local bookmarks when cloud returns empty bookmarks', () => {
+      const local = {
+        lastVisitedChapterId: 'c10-s1-ap',
+        completedChapterIds: ['c10-s1-ap'],
+        bookmarkedFormulaIds: ['ap-nth-term', 'ap-sum'],
+        practiceStats: { totalAttempted: 5, correctCount: 4, currentStreak: 2, bestStreak: 3 },
+        questionHistory: {},
+        updatedAt: 1000,
+      };
+      const cloud = {
+        lastVisitedChapterId: null,
+        completedChapterIds: [],
+        bookmarkedFormulaIds: [],
+        practiceStats: { totalAttempted: 0, correctCount: 0, currentStreak: 0, bestStreak: 0 },
+        questionHistory: {},
+        updatedAt: 500,
+      };
+
+      const merged = mergeUserProgress(cloud, local);
+      expect(merged.bookmarkedFormulaIds).toEqual(['ap-nth-term', 'ap-sum']);
+      expect(merged.completedChapterIds).toEqual(['c10-s1-ap']);
+      expect(merged.practiceStats.correctCount).toBe(4);
+    });
+
+    it('unions bookmarks and completed chapters across multi-device usage for the same student', () => {
+      const local = {
+        lastVisitedChapterId: 'c9-s1-nr',
+        completedChapterIds: ['c9-s1-nr'],
+        bookmarkedFormulaIds: ['heron-area'],
+        practiceStats: { totalAttempted: 10, correctCount: 8, currentStreak: 1, bestStreak: 4 },
+        questionHistory: { 'q-1': { answered: true, isCorrect: true, timestamp: 100 } },
+        updatedAt: 2000,
+      };
+      const cloud = {
+        lastVisitedChapterId: 'c10-s2-trig',
+        completedChapterIds: ['c10-s2-trig'],
+        bookmarkedFormulaIds: ['trig-pythagorean', 'heron-area'],
+        practiceStats: { totalAttempted: 12, correctCount: 9, currentStreak: 3, bestStreak: 5 },
+        questionHistory: { 'q-2': { answered: true, isCorrect: true, timestamp: 200 } },
+        updatedAt: 3000,
+      };
+
+      const merged = mergeUserProgress(cloud, local);
+      expect(merged.completedChapterIds).toContain('c9-s1-nr');
+      expect(merged.completedChapterIds).toContain('c10-s2-trig');
+      expect(merged.completedChapterIds.length).toBe(2);
+
+      expect(merged.bookmarkedFormulaIds).toContain('heron-area');
+      expect(merged.bookmarkedFormulaIds).toContain('trig-pythagorean');
+      expect(merged.bookmarkedFormulaIds.length).toBe(2);
+
+      expect(merged.practiceStats.totalAttempted).toBe(12);
+      expect(merged.practiceStats.correctCount).toBe(9);
+      expect(merged.practiceStats.bestStreak).toBe(5);
+      expect(merged.questionHistory['q-1']).toBeDefined();
+      expect(merged.questionHistory['q-2']).toBeDefined();
+    });
+  });
 });
+
 

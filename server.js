@@ -97,6 +97,7 @@ async function saveDbAsync() {
          ON CONFLICT (key) DO UPDATE SET data = EXCLUDED.data, updated_at = NOW();`,
         [JSON.stringify(db)]
       );
+      lastCloudSyncTime = Date.now();
     } catch (err) {
       console.error('[DATABASE] Cloud sync error to Supabase/PostgreSQL:', err.message);
     }
@@ -108,6 +109,8 @@ function saveDb() {
     console.error('[DATABASE] Async save error:', err);
   });
 }
+
+let lastCloudSyncTime = 0;
 
 // Asynchronously load state from Cloud Database (Supabase) if configured
 async function loadStateFromCloud() {
@@ -134,6 +137,7 @@ async function loadStateFromCloud() {
         progress: cloudData.progress || {},
         globalStats: cloudData.globalStats || { totalQuestionsSolvedCommunity: 348 },
       };
+      lastCloudSyncTime = Date.now();
       console.log(`[DATABASE] Successfully loaded state from Supabase / Cloud PostgreSQL (${Object.keys(db.users).length} registered students).`);
     } else {
       console.log('[DATABASE] Initializing fresh state table in Supabase...');
@@ -143,6 +147,29 @@ async function loadStateFromCloud() {
     console.error('[DATABASE] Failed to load initial state from Supabase:', err.message);
   } finally {
     isCloudLoaded = true;
+  }
+}
+
+async function refreshCloudStateIfNeeded() {
+  if (!pgPool) return;
+  const now = Date.now();
+  // Keep serverless containers fresh - refresh if older than 2.5 seconds
+  if (now - lastCloudSyncTime > 2500) {
+    try {
+      const res = await pgPool.query(`SELECT data FROM mathverse_state WHERE key = 'main_state' LIMIT 1;`);
+      if (res.rows && res.rows.length > 0 && res.rows[0].data) {
+        const cloudData = res.rows[0].data;
+        db.users = { ...(db.users || {}), ...(cloudData.users || {}) };
+        db.sessions = { ...(db.sessions || {}), ...(cloudData.sessions || {}) };
+        db.resetTokens = { ...(db.resetTokens || {}), ...(cloudData.resetTokens || {}) };
+        db.verificationCodes = { ...(db.verificationCodes || {}), ...(cloudData.verificationCodes || {}) };
+        db.progress = { ...(db.progress || {}), ...(cloudData.progress || {}) };
+        db.globalStats = cloudData.globalStats || db.globalStats;
+        lastCloudSyncTime = now;
+      }
+    } catch (err) {
+      console.warn('[DATABASE] Background refresh from Supabase skipped:', err.message);
+    }
   }
 }
 
@@ -506,6 +533,7 @@ async function handleApiRequest(req, res) {
 
   // Ensure database state from Supabase Cloud is loaded before serving requests
   await ensureCloudLoaded();
+  await refreshCloudStateIfNeeded();
 
   try {
     // 1. REGISTER (Strict: 1 email = 1 account, 1 username = 1 account, confirm password check, email verification code)
