@@ -47,9 +47,7 @@ export const ResourceLibraryView: React.FC<ResourceLibraryViewProps> = ({
 
   // Keep in sync with prop if user toggles header grade filter
   React.useEffect(() => {
-    if (selectedClassFilter) {
-      setActiveClassTab(selectedClassFilter);
-    }
+    setActiveClassTab(selectedClassFilter || 'all');
   }, [selectedClassFilter]);
 
   // Filter textbooks

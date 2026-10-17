@@ -188,6 +188,21 @@ export const PdfReaderModal: React.FC<PdfReaderModalProps> = ({
     return () => window.removeEventListener('resize', handleResize);
   }, [fitMode, pdfDoc, currentPage, renderPage]);
 
+  const handleToggleFullscreen = () => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    if (!document.fullscreenElement) {
+      el.requestFullscreen?.()
+        .then(() => setIsFullscreen(true))
+        .catch(() => {});
+    } else {
+      document.exitFullscreen?.()
+        .then(() => setIsFullscreen(false))
+        .catch(() => {});
+    }
+  };
+
   // Keyboard navigation
   useEffect(() => {
     if (!isOpen) return;
@@ -257,21 +272,6 @@ export const PdfReaderModal: React.FC<PdfReaderModalProps> = ({
   const handleResetZoom = () => {
     setFitMode('custom');
     setScale(1.0);
-  };
-
-  const handleToggleFullscreen = () => {
-    const el = containerRef.current;
-    if (!el) return;
-
-    if (!document.fullscreenElement) {
-      el.requestFullscreen?.()
-        .then(() => setIsFullscreen(true))
-        .catch(() => {});
-    } else {
-      document.exitFullscreen?.()
-        .then(() => setIsFullscreen(false))
-        .catch(() => {});
-    }
   };
 
   // Direct download handler

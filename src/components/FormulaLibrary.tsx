@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MathView } from './MathView';
 import { allFormulasData } from '../data/formulasData';
 import {
@@ -22,6 +22,7 @@ interface FormulaLibraryProps {
   onToggleBookmark: (formulaId: string) => void;
   user?: StudentUser | null;
   onOpenAuth?: () => void;
+  initialFormulaId?: string | null;
 }
 
 export const FormulaLibrary: React.FC<FormulaLibraryProps> = ({
@@ -30,12 +31,30 @@ export const FormulaLibrary: React.FC<FormulaLibraryProps> = ({
   onToggleBookmark,
   user = null,
   onOpenAuth = () => {},
+  initialFormulaId = null,
 }) => {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [selectedGrade, setSelectedGrade] = useState<'All' | 9 | 10>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [expandedDerivationIds, setExpandedDerivationIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (initialFormulaId) {
+      const match = allFormulasData.find((f) => f.id === initialFormulaId);
+      if (match) {
+        setSelectedCategory('All');
+        setSelectedGrade('All');
+        setSearchQuery(match.name);
+        setTimeout(() => {
+          const el = document.getElementById(`formula-${initialFormulaId}`);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 100);
+      }
+    }
+  }, [initialFormulaId]);
 
   const categories = [
     'All',
@@ -146,6 +165,7 @@ export const FormulaLibrary: React.FC<FormulaLibraryProps> = ({
           return (
             <div
               key={formula.id}
+              id={`formula-${formula.id}`}
               className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 sm:p-5 shadow-sm hover:shadow-md transition flex flex-col justify-between"
             >
               <div>

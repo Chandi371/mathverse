@@ -32,6 +32,7 @@ export function App() {
   const [selectedClass, setSelectedClass] = useState<9 | 10 | null>(null);
   const [activeChapterId, setActiveChapterId] = useState<string>('c10-s1-ap');
   const [activeLabId, setActiveLabId] = useState<string>('area-model');
+  const [activeFormulaId, setActiveFormulaId] = useState<string | null>(null);
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
 
@@ -90,7 +91,8 @@ export function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleSelectFormula = (_formulaId: string) => {
+  const handleSelectFormula = (formulaId: string) => {
+    setActiveFormulaId(formulaId);
     setActiveTab('formulas');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -183,6 +185,7 @@ export function App() {
             onToggleBookmark={handleToggleBookmark}
             user={user}
             onOpenAuth={() => setIsAuthModalOpen(true)}
+            initialFormulaId={activeFormulaId}
           />
         )}
 

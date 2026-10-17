@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { InteractiveLabDispatcher } from './InteractiveLab/InteractiveLabDispatcher';
 import { Sparkles } from 'lucide-react';
 
@@ -17,6 +17,12 @@ export const LabHubView: React.FC<LabHubViewProps> = ({
   onOpenAuth = () => {},
 }) => {
   const [activeLabId, setActiveLabId] = useState<string>(initialLabId);
+
+  useEffect(() => {
+    if (initialLabId) {
+      setActiveLabId(initialLabId);
+    }
+  }, [initialLabId]);
 
   const labList = [
     {
