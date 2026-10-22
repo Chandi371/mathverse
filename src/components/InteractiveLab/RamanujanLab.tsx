@@ -311,7 +311,7 @@ export const RamanujanLab: React.FC = () => {
                   Row 4: <code className="font-mono">C+1, D-1, A+1, B-1</code>
                 </p>
                 <p className="text-[10px] text-slate-400 pt-1">
-                  Because every row, column, and pair adds and subtracts matching integer offsets, the sum is strictly invariant to $A + B + C + D$.
+                  Because every row, column, and pair adds and subtracts matching integer offsets, the sum is strictly invariant to A + B + C + D.
                 </p>
               </div>
             </div>
@@ -394,7 +394,7 @@ export const RamanujanLab: React.FC = () => {
           <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-xs text-amber-900 dark:text-amber-200 flex items-center gap-2">
             <Award className="w-4 h-4 text-amber-600 shrink-0" />
             <span>
-              <strong>Taxicab Invariant:</strong> 1729 is the smallest positive integer $Ta(2)$ with this dual-cube property. The next number with this property is 4,104 ($2^3 + 16^3 = 9^3 + 15^3$).
+              <strong>Taxicab Invariant:</strong> 1729 is the smallest positive integer Ta(2) with this dual-cube property. The next number with this property is 4,104 (2³ + 16³ = 9³ + 15³ = 4,104).
             </span>
           </div>
         </div>
