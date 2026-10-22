@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseUrlToState, formatStateToUrl, areStatesEqual, type RouteState } from './router';
+import { parseUrlToState, formatStateToUrl, type RouteState } from './router';
 
 describe('Browser History & Navigation Flow Simulation', () => {
   it('simulates user journey: Home -> Chapters -> ChapterView -> Back -> Back', () => {
