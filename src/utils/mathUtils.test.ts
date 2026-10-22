@@ -17,6 +17,9 @@ import {
   thalesTheorem,
   calculateStatistics,
   sectionFormula,
+  generateRamanujanMagicSquare,
+  evaluateRamanujanRadical,
+  taxicab1729Metrics,
 } from './mathUtils';
 
 describe('MATHVERSE Mathematical Accuracy Test Suite', () => {
@@ -294,6 +297,57 @@ describe('MATHVERSE Mathematical Accuracy Test Suite', () => {
       const pt = sectionFormula(0, 0, 6, 9, 1, 2);
       expect(pt.x).toBe(2);
       expect(pt.y).toBe(3);
+    });
+  });
+
+  describe('Srinivasa Ramanujan Mathematical Invariants (Dec 22 Tribute)', () => {
+    it('1. Ramanujan Magic Square for birthdate 22/12/1887 yields invariant sum 139 across all dimensions', () => {
+      const square = generateRamanujanMagicSquare(22, 12, 18, 87);
+      expect(square.magicConstant).toBe(139);
+      expect(square.isValid).toBe(true);
+
+      // Verify all 4 rows
+      square.rowSums.forEach((sum) => expect(sum).toBe(139));
+      // Verify all 4 columns
+      square.colSums.forEach((sum) => expect(sum).toBe(139));
+      // Diagonals
+      expect(square.diag1Sum).toBe(139);
+      expect(square.diag2Sum).toBe(139);
+      // Corners & Center
+      expect(square.cornersSum).toBe(139);
+      expect(square.centerSum).toBe(139);
+      // Quadrants
+      square.quadrantSums.forEach((sum) => expect(sum).toBe(139));
+    });
+
+    it('2. Custom birthday magic squares maintain algebraic validity for any birthdate', () => {
+      // Example: 15 / 08 / 19 / 47 (Independence Day) -> Sum = 15 + 8 + 19 + 47 = 89
+      const sqInd = generateRamanujanMagicSquare(15, 8, 19, 47);
+      expect(sqInd.magicConstant).toBe(89);
+      expect(sqInd.isValid).toBe(true);
+
+      // Example: 26 / 01 / 19 / 50 (Republic Day) -> Sum = 26 + 1 + 19 + 50 = 96
+      const sqRep = generateRamanujanMagicSquare(26, 1, 19, 50);
+      expect(sqRep.magicConstant).toBe(96);
+      expect(sqRep.isValid).toBe(true);
+    });
+
+    it('3. Hardy-Ramanujan Taxicab number 1729 equals sum of two cubes in two unique ways', () => {
+      const metrics = taxicab1729Metrics();
+      expect(metrics.target).toBe(1729);
+      expect(metrics.pair1.a ** 3 + metrics.pair1.b ** 3).toBe(1729);
+      expect(metrics.pair2.a ** 3 + metrics.pair2.b ** 3).toBe(1729);
+      expect(metrics.isEqual).toBe(true);
+    });
+
+    it('4. Ramanujan nested radical converges toward 3 as depth increases', () => {
+      const resDepth1 = evaluateRamanujanRadical(1);
+      const resDepth5 = evaluateRamanujanRadical(5);
+      const resDepth10 = evaluateRamanujanRadical(10);
+
+      expect(resDepth1.value).toBeGreaterThan(1.5);
+      expect(resDepth5.value).toBeCloseTo(3, 1);
+      expect(resDepth10.value).toBeCloseTo(3, 3);
     });
   });
 });

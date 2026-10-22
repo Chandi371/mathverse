@@ -80,6 +80,69 @@ export const SearchModal: React.FC<SearchModalProps> = ({
       )
     : [];
 
+  const registeredLabs = [
+    {
+      id: 'ramanujan-lab',
+      title: 'Srinivasa Ramanujan Memorial Lab',
+      subtitle: 'Birthday Magic Square Generator, 1729 Taxicab Cubes, & Nested Radical = 3',
+      badge: 'Dec 22 Special',
+    },
+    {
+      id: 'area-model',
+      title: 'Geometric Area Model',
+      subtitle: 'Visual proof of (a + b)², (a - b)², and a² - b²',
+      badge: 'Algebra',
+    },
+    {
+      id: 'trig-triangle',
+      title: 'Right Triangle & SOH-CAH-TOA',
+      subtitle: 'Trigonometric ratios & Pythagorean identity',
+      badge: 'Trigonometry',
+    },
+    {
+      id: 'arithmetic-progression',
+      title: 'Arithmetic Progression Lab',
+      subtitle: 'Gauss pairing model & AP sum derivations',
+      badge: 'Sequences',
+    },
+    {
+      id: 'herons-formula',
+      title: "Heron's Formula & Triangle Inequality",
+      subtitle: 'Triangle area and side length constraints',
+      badge: 'Mensuration',
+    },
+    {
+      id: 'coordinate-geometry',
+      title: 'Cartesian Distance & Midpoint Lab',
+      subtitle: 'Pythagorean distance between 2 points',
+      badge: 'Geometry',
+    },
+    {
+      id: 'quadratic-parabola',
+      title: 'Quadratic Parabola & Discriminant Lab',
+      subtitle: 'Roots behavior based on D = b² - 4ac',
+      badge: 'Algebra',
+    },
+    {
+      id: 'probability-sim',
+      title: 'Monte Carlo Probability Simulator',
+      subtitle: 'Coin flips, dice rolls & Law of Large Numbers',
+      badge: 'Probability',
+    },
+  ];
+
+  const filteredLabs = cleanQuery
+    ? registeredLabs.filter(
+        (l) =>
+          l.title.toLowerCase().includes(cleanQuery) ||
+          l.subtitle.toLowerCase().includes(cleanQuery) ||
+          l.badge.toLowerCase().includes(cleanQuery) ||
+          cleanQuery.includes('ramanujan') ||
+          cleanQuery.includes('magic') ||
+          cleanQuery.includes('1729')
+      )
+    : [];
+
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-12 sm:pt-20 px-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-150">
       <div
@@ -115,6 +178,43 @@ export const SearchModal: React.FC<SearchModalProps> = ({
 
         {/* Results Container */}
         <div className="overflow-y-auto p-3 space-y-4 text-xs sm:text-sm">
+          {/* Interactive Labs Section */}
+          {filteredLabs.length > 0 && (
+            <div>
+              <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-2 mb-1.5 flex items-center gap-1.5">
+                <FlaskConical className="w-3.5 h-3.5 text-indigo-500" />
+                Interactive Labs ({filteredLabs.length})
+              </div>
+              <div className="space-y-1">
+                {filteredLabs.map((lab) => (
+                  <div
+                    key={lab.id}
+                    onClick={() => {
+                      onSelectLab(lab.id);
+                      onClose();
+                    }}
+                    className="p-2.5 rounded-xl hover:bg-indigo-50 dark:hover:bg-slate-800 cursor-pointer flex items-center justify-between group transition"
+                  >
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-slate-800 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
+                          {lab.title}
+                        </span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-100/60 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-mono">
+                          {lab.badge}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 line-clamp-1 mt-0.5">
+                        {lab.subtitle}
+                      </p>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-indigo-500 opacity-0 group-hover:opacity-100 transition" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Chapters Section */}
           {filteredChapters.length > 0 && (
             <div>

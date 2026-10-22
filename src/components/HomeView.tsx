@@ -111,6 +111,33 @@ export const HomeView: React.FC<HomeViewProps> = ({
         </div>
       </section>
 
+      {/* National Mathematics Day 22 December Special Tribute */}
+      <section className="p-4 sm:p-5 rounded-2xl sm:rounded-3xl bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-indigo-500/10 border border-amber-300/80 dark:border-amber-700/60 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-500/40">
+              National Mathematics Day • 22 December
+            </span>
+            <span className="text-xs text-amber-900/80 dark:text-amber-200/80 font-medium hidden sm:inline">
+              Honouring Srinivasa Ramanujan
+            </span>
+          </div>
+          <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white">
+            Srinivasa Ramanujan Memorial Lab: Birthday Magic Square &amp; 1729
+          </h3>
+          <p className="text-xs text-slate-600 dark:text-slate-300 max-w-2xl">
+            Generate your own personal 4×4 Birthday Magic Square, visualize the dual cubes of taxicab number 1729, and explore Ramanujan's nested radical proof.
+          </p>
+        </div>
+        <button
+          onClick={() => onOpenLab('ramanujan-lab')}
+          className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-700 hover:to-amber-600 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition shrink-0 shadow-sm cursor-pointer active:scale-95"
+        >
+          <span>Launch Ramanujan Lab</span>
+          <ArrowRight className="w-4 h-4" />
+        </button>
+      </section>
+
       {/* Featured Live Demonstration */}
       <section className="space-y-3 sm:space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-1.5 sm:gap-2">

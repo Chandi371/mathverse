@@ -26,6 +26,14 @@ export const LabHubView: React.FC<LabHubViewProps> = ({
 
   const labList = [
     {
+      id: 'ramanujan-lab',
+      title: 'Srinivasa Ramanujan Memorial Lab',
+      grade: 'Dec 22 Special',
+      topic: 'National Mathematics Day',
+      formula: 'Birthday Matrix & 1729',
+      description: 'Interactive Birthday Magic Square generator, Hardy-Ramanujan 1729 cube visualizer, and nested radicals.',
+    },
+    {
       id: 'area-model',
       title: 'Geometric Area Model',
       grade: 'Class 9',

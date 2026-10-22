@@ -289,3 +289,109 @@ export function sectionFormula(
     y: (m * y2 + n * y1) / (m + n),
   };
 }
+
+/**
+ * Srinivasa Ramanujan Mathematics Utilities
+ * (National Mathematics Day — December 22)
+ */
+
+export interface RamanujanMagicSquare {
+  grid: number[][];
+  magicConstant: number;
+  rowSums: number[];
+  colSums: number[];
+  diag1Sum: number;
+  diag2Sum: number;
+  cornersSum: number;
+  centerSum: number;
+  quadrantSums: number[];
+  isValid: boolean;
+}
+
+export function generateRamanujanMagicSquare(
+  a: number,
+  b: number,
+  c: number,
+  d: number
+): RamanujanMagicSquare {
+  const row1 = [a, b, c, d];
+  const row2 = [d + 1, c - 1, b - 3, a + 3];
+  const row3 = [b - 2, a + 2, d + 2, c - 2];
+  const row4 = [c + 1, d - 1, a + 1, b - 1];
+  const grid = [row1, row2, row3, row4];
+
+  const magicConstant = a + b + c + d;
+  const rowSums = grid.map((r) => r.reduce((acc, v) => acc + v, 0));
+  const colSums = [0, 1, 2, 3].map((colIdx) =>
+    grid.reduce((acc, row) => acc + row[colIdx], 0)
+  );
+
+  const diag1Sum = grid[0][0] + grid[1][1] + grid[2][2] + grid[3][3];
+  const diag2Sum = grid[0][3] + grid[1][2] + grid[2][1] + grid[3][0];
+  const cornersSum = grid[0][0] + grid[0][3] + grid[3][0] + grid[3][3];
+  const centerSum = grid[1][1] + grid[1][2] + grid[2][1] + grid[2][2];
+
+  const quadrantSums = [
+    grid[0][0] + grid[0][1] + grid[1][0] + grid[1][1], // Top-Left
+    grid[0][2] + grid[0][3] + grid[1][2] + grid[1][3], // Top-Right
+    grid[2][0] + grid[2][1] + grid[3][0] + grid[3][1], // Bottom-Left
+    grid[2][2] + grid[2][3] + grid[3][2] + grid[3][3], // Bottom-Right
+  ];
+
+  const allSumsMatch =
+    rowSums.every((s) => s === magicConstant) &&
+    colSums.every((s) => s === magicConstant) &&
+    diag1Sum === magicConstant &&
+    diag2Sum === magicConstant &&
+    cornersSum === magicConstant &&
+    centerSum === magicConstant &&
+    quadrantSums.every((s) => s === magicConstant);
+
+  return {
+    grid,
+    magicConstant,
+    rowSums,
+    colSums,
+    diag1Sum,
+    diag2Sum,
+    cornersSum,
+    centerSum,
+    quadrantSums,
+    isValid: allSumsMatch,
+  };
+}
+
+export function evaluateRamanujanRadical(depth: number = 6): {
+  depth: number;
+  value: number;
+  steps: { k: number; innerVal: number }[];
+} {
+  const safeDepth = Math.max(1, Math.min(15, Math.floor(depth)));
+  const steps: { k: number; innerVal: number }[] = [];
+
+  let current = Math.sqrt(1 + (safeDepth + 1) * (safeDepth + 2));
+  steps.unshift({ k: safeDepth, innerVal: current });
+
+  for (let k = safeDepth - 1; k >= 1; k--) {
+    current = Math.sqrt(1 + (k + 1) * current);
+    steps.unshift({ k, innerVal: current });
+  }
+
+  return {
+    depth: safeDepth,
+    value: current,
+    steps,
+  };
+}
+
+export function taxicab1729Metrics() {
+  const pair1 = { a: 1, b: 12, cubeA: 1, cubeB: 1728, sum: 1729 };
+  const pair2 = { a: 9, b: 10, cubeA: 729, cubeB: 1000, sum: 1729 };
+  return {
+    target: 1729,
+    pair1,
+    pair2,
+    isEqual: pair1.sum === 1729 && pair2.sum === 1729,
+  };
+}
+
